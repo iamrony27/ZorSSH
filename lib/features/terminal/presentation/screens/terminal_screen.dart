@@ -12,6 +12,7 @@ import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/localization/app_localization.dart';
 import 'package:aetherssh/core/utils/error_mapper.dart';
+import 'package:aetherssh/core/widgets/os_icon.dart';
 import 'package:aetherssh/features/terminal/providers/terminal_provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalState;
 
@@ -388,13 +389,20 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
                   width: 0.5,
                 ),
               ),
-              child: Icon(
-                LucideIcons.terminal,
-                size: 20,
-                color: isOnline
-                    ? AppTheme.terminalMint
-                    : AppTheme.textSecondary,
-              ),
+              child: server.osDistro.isNotEmpty
+                  ? Center(
+                      child: OsIconWidget(
+                        osDistro: server.osDistro,
+                        size: 22,
+                      ),
+                    )
+                  : Icon(
+                      LucideIcons.terminal,
+                      size: 20,
+                      color: isOnline
+                          ? AppTheme.terminalMint
+                          : AppTheme.textSecondary,
+                    ),
             ),
             const SizedBox(width: 14),
             // Server name & technical subtitle

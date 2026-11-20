@@ -17,6 +17,8 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:ui';
 import 'package:aetherssh/core/localization/app_localization.dart';
+import 'package:aetherssh/features/files/services/download_manager.dart';
+import 'package:aetherssh/features/files/presentation/widgets/download_manager_sheet.dart';
 
 class FilesScreen extends ConsumerStatefulWidget {
   const FilesScreen({super.key});
@@ -269,6 +271,31 @@ class _FilesScreenState extends ConsumerState<FilesScreen> {
       backgroundColor: AppTheme.background,
       elevation: 0,
       actions: [
+        // Download manager button
+        Consumer(
+          builder: (context, ref, _) {
+            final dlState = ref.watch(downloadManagerProvider);
+            final hasActive = dlState.activeCount > 0;
+            return IconButton(
+              icon: Badge(
+                isLabelVisible: dlState.tasks.isNotEmpty,
+                label: Text(
+                  '${hasActive ? dlState.activeCount : dlState.completedCount}',
+                ),
+                backgroundColor:
+                    hasActive ? AppTheme.terminalMint : Colors.white24,
+                textColor: hasActive ? Colors.black : Colors.white,
+                child: const Icon(
+                  LucideIcons.downloadCloud,
+                  size: 20,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              tooltip: 'Downloads',
+              onPressed: () => DownloadManagerSheet.show(context),
+            );
+          },
+        ),
         // Search button
         if (state.isConnected)
           IconButton(
@@ -1500,42 +1527,22 @@ class _FilesScreenState extends ConsumerState<FilesScreen> {
     }
 
     try {
-      if (!mounted) return;
-
-      final directoryPath = await FilePicker.getDirectoryPath(
-        dialogTitle: 'Select download folder',
-      );
-
-      if (directoryPath == null) {
-        // User cancelled destination folder selection
-        return;
-      }
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading ${files.length} file(s)...'),
-          backgroundColor: AppTheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      for (final file in files) {
-        final filePath = '$directoryPath/${file.name}';
-        await ref
-            .read(fileBrowserStateProvider.notifier)
-            .downloadFile(file, destinationPath: filePath);
-      }
+      final sftp = ref.read(sftpServiceProvider);
+      await ref
+          .read(downloadManagerProvider.notifier)
+          .enqueueMultiple(sftp: sftp, files: files);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Downloaded ${files.length} file(s) to $directoryPath',
-            ),
-            backgroundColor: AppTheme.success,
+            content: Text('Started downloading ${files.length} file(s) to Downloads'),
+            backgroundColor: AppTheme.terminalMint,
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'VIEW',
+              textColor: Colors.black,
+              onPressed: () => DownloadManagerSheet.show(context),
+            ),
           ),
         );
       }
@@ -1771,59 +1778,24 @@ class _FilesScreenState extends ConsumerState<FilesScreen> {
 
   Future<void> _downloadFile(RemoteFile file) async {
     try {
-      if (!mounted) return;
+      final sftp = ref.read(sftpServiceProvider);
+      await ref
+          .read(downloadManagerProvider.notifier)
+          .enqueueDownload(sftp: sftp, file: file);
 
-      // Select destination folder via system file picker [LOGIC-003]
-      final destDir = await FilePicker.getDirectoryPath(
-        dialogTitle: 'Select destination folder',
-      );
-
-      if (destDir == null) {
-        // User cancelled folder selection
-        return;
-      }
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading ${file.name}...'),
-          backgroundColor: AppTheme.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
-      final tempDir = await getTemporaryDirectory();
-      final tempFile = File('${tempDir.path}/${file.name}');
-
-      // Stream download from SFTP socket into temporary file on disk
-      final File savedFile = await ref
-          .read(fileBrowserStateProvider.notifier)
-          .downloadFile(file, destinationPath: tempFile.path);
-
-      try {
-        final destPath = '$destDir/${file.name}';
-        final destFile = File(destPath);
-
-        // Stream chunked file bytes from temp to destination without buffering in RAM [LOGIC-002]
-        final sink = destFile.openWrite();
-        await savedFile.openRead().pipe(sink);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Saved ${file.name} to $destDir'),
-              backgroundColor: AppTheme.success,
-              behavior: SnackBarBehavior.floating,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading ${file.name} to Downloads...'),
+            backgroundColor: AppTheme.terminalMint,
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'VIEW',
+              textColor: Colors.black,
+              onPressed: () => DownloadManagerSheet.show(context),
             ),
-          );
-        }
-      } finally {
-        if (await savedFile.exists()) {
-          try {
-            await savedFile.delete();
-          } catch (_) {}
-        }
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

@@ -8,6 +8,7 @@ import 'package:aetherssh/core/theme/app_theme.dart';
 
 import 'package:aetherssh/core/widgets/glow_border.dart';
 import 'package:aetherssh/core/providers/server_loading_provider.dart';
+import 'package:aetherssh/core/widgets/os_icon.dart';
 
 class ServerSummaryCard extends ConsumerWidget {
   final Server server;
@@ -51,15 +52,26 @@ class ServerSummaryCard extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
-                      child: Text(
-                        server.name,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.3,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                      child: Row(
+                        children: [
+                          OsIconWidget(
+                            osDistro: server.osDistro,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              server.name,
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: -0.3,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),

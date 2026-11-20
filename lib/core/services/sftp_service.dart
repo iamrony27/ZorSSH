@@ -357,6 +357,9 @@ class SftpService {
     String remotePath, {
     String? destinationPath,
     void Function(int received, int total)? onProgress,
+    void Function(int received, int total, double bytesPerSec)?
+        onProgressExtended,
+    bool Function()? isCancelled,
   }) async {
     if (_sftpClient == null) {
       throw Exception('Not connected to server');
@@ -385,14 +388,43 @@ class SftpService {
 
       sink = outFile.openWrite();
       int receivedBytes = 0;
+      final stopwatch = Stopwatch()..start();
+      int lastReportBytes = 0;
+      int lastReportTime = 0;
+      double currentSpeed = 0.0;
 
       await for (final chunk in file.read()) {
+        if (isCancelled?.call() == true) {
+          throw Exception('Download cancelled by user');
+        }
+
         sink.add(chunk);
         receivedBytes += chunk.length;
+
+        final elapsedMs = stopwatch.elapsedMilliseconds;
+        if (elapsedMs - lastReportTime >= 250) {
+          final timeDiff = (elapsedMs - lastReportTime) / 1000.0;
+          final bytesDiff = receivedBytes - lastReportBytes;
+          if (timeDiff > 0) {
+            currentSpeed = bytesDiff / timeDiff;
+          }
+          lastReportBytes = receivedBytes;
+          lastReportTime = elapsedMs;
+        }
+
         onProgress?.call(receivedBytes, totalSize);
+        onProgressExtended?.call(receivedBytes, totalSize, currentSpeed);
       }
 
       await sink.flush();
+
+      // Integrity check
+      if (totalSize > 0 && receivedBytes != totalSize) {
+        throw Exception(
+          'Download integrity check failed: expected $totalSize bytes, received $receivedBytes bytes',
+        );
+      }
+
       AppLogger.debug('SFTP: Streamed $receivedBytes bytes to ${outFile.path}');
       return outFile;
     } catch (e) {
