@@ -136,12 +136,6 @@ class _AboutScreenState extends State<AboutScreen> {
               child: Column(
                 children: [
                   _buildListTile(
-                    title: 'Attribution & Foundation',
-                    subtitle: 'Inspired by Orbit (Yadu Krishnan H)',
-                    icon: LucideIcons.sparkles,
-                  ),
-                  _divider(),
-                  _buildListTile(
                     title: 'Privacy Policy',
                     icon: LucideIcons.shield,
                     onTap: () {

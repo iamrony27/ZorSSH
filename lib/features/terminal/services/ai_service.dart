@@ -19,10 +19,10 @@ class AiConfig {
 
   bool get isNvidia => provider == 'nvidia';
 
-  factory AiConfig.defaultNvidia({required String apiKey}) {
+  factory AiConfig.defaultNvidia({String? apiKey}) {
     return AiConfig(
       provider: 'nvidia',
-      apiKey: apiKey,
+      apiKey: apiKey ?? AiService.embeddedNvidiaApiKey,
       endpoint: AiService.defaultNvidiaEndpoint,
       model: AiService.defaultNvidiaModel,
     );
@@ -56,7 +56,8 @@ class AiConnectionResult {
 
 class AiService {
   static const String defaultNvidiaEndpoint = 'https://integrate.api.nvidia.com/v1';
-  static const String defaultNvidiaModel = 'meta/llama-3.1-70b-instruct';
+  static const String defaultNvidiaModel = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+  static const String embeddedNvidiaApiKey = 'nvapi-placeholder';
 
   /// Convenience alias for cleanCommandOutput
   static String cleanCommand(String raw) => cleanCommandOutput(raw);
@@ -169,7 +170,7 @@ STRICT INSTRUCTIONS:
               {'role': 'user', 'content': userPrompt.trim()},
             ],
             'temperature': 0.1,
-            'max_tokens': 120,
+            'max_tokens': 512,
           }),
         )
         .timeout(
@@ -194,7 +195,11 @@ STRICT INSTRUCTIONS:
       throw Exception('Empty response from AI provider');
     }
 
-    final rawContent = choices[0]['message']['content'] as String? ?? '';
+    final messageObj = choices[0]['message'] as Map?;
+    var rawContent = messageObj?['content'] as String? ?? '';
+    if (rawContent.isEmpty && messageObj?['reasoning_content'] != null) {
+      rawContent = messageObj!['reasoning_content'] as String;
+    }
     final cleaned = cleanCommandOutput(rawContent);
 
     if (cleaned.isEmpty) {

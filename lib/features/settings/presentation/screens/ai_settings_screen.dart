@@ -29,7 +29,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
   bool? _testSuccess;
 
   static const _nvidiaDefaultEndpoint = 'https://integrate.api.nvidia.com/v1';
-  static const _nvidiaDefaultModel = 'meta/llama-3.1-70b-instruct';
+  static const _nvidiaDefaultModel = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+  static const _nvidiaEmbeddedApiKey =
+      'nvapi-placeholder';
 
   @override
   void initState() {
@@ -51,7 +53,7 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
 
     setState(() {
       _provider = config['provider'] ?? 'nvidia';
-      _apiKeyController.text = config['apiKey'] ?? '';
+      _apiKeyController.text = config['apiKey'] ?? _nvidiaEmbeddedApiKey;
       _modelController.text = config['model'] ?? _nvidiaDefaultModel;
       _endpointController.text = config['endpoint'] ?? _nvidiaDefaultEndpoint;
     });
@@ -227,6 +229,9 @@ class _AiSettingsScreenState extends ConsumerState<AiSettingsScreen> {
                           _provider = val!;
                           _endpointController.text = _nvidiaDefaultEndpoint;
                           _modelController.text = _nvidiaDefaultModel;
+                          if (_apiKeyController.text.trim().isEmpty) {
+                            _apiKeyController.text = _nvidiaEmbeddedApiKey;
+                          }
                         });
                       },
                     ),

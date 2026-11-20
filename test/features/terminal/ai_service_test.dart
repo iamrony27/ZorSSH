@@ -75,11 +75,11 @@ void main() {
 
   group('AiConfig', () {
     test('default Nvidia config has correct endpoint and model', () {
-      final config = AiConfig.defaultNvidia(apiKey: 'nvapi-test123');
+      final config = AiConfig.defaultNvidia();
       expect(config.isNvidia, isTrue);
       expect(config.endpoint, 'https://integrate.api.nvidia.com/v1');
-      expect(config.model, 'meta/llama-3.1-70b-instruct');
-      expect(config.apiKey, 'nvapi-test123');
+      expect(config.model, 'nvidia/nemotron-3.5-lightning-30b-a3b');
+      expect(config.apiKey, 'nvapi-placeholder');
     });
   });
 }

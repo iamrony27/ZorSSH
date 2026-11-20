@@ -285,7 +285,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ),
                   title: Text(
-                    'About Orbit',
+                    'About AetherSSH',
                     style: GoogleFonts.inter(
                       color: AppTheme.textPrimary,
                       fontSize: 15,
@@ -321,8 +321,8 @@ class SettingsScreen extends ConsumerWidget {
               final buildNumber = snapshot.data?.buildNumber;
               final versionText =
                   (buildNumber != null && buildNumber.isNotEmpty)
-                  ? 'Orbit v$version+$buildNumber'
-                  : 'Orbit v$version';
+                  ? 'AetherSSH v$version+$buildNumber'
+                  : 'AetherSSH v$version';
               return Center(
                 child: Text(
                   versionText,

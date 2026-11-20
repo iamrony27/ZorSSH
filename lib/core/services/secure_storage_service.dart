@@ -318,16 +318,21 @@ class SecureStorageService {
   }
 
   Future<Map<String, String?>> readAiConfig() async {
-    final provider = await _read(_kAiProvider);
-    final apiKey = await _read(_kAiApiKey);
-    final model = await _read(_kAiModel);
-    final endpoint = await _read(_kAiEndpoint);
+    final provider = await _read(_kAiProvider) ?? 'nvidia';
+    var apiKey = await _read(_kAiApiKey);
+    final model = await _read(_kAiModel) ?? 'nvidia/nemotron-3.5-lightning-30b-a3b';
+    final endpoint = await _read(_kAiEndpoint) ?? 'https://integrate.api.nvidia.com/v1';
+
+    // Default to the embedded application API key for NVIDIA NIM if none has been saved
+    if ((apiKey == null || apiKey.trim().isEmpty) && provider == 'nvidia') {
+      apiKey = 'nvapi-placeholder';
+    }
 
     return {
-      'provider': provider ?? 'nvidia',
+      'provider': provider,
       'apiKey': apiKey,
-      'model': model ?? 'meta/llama-3.1-70b-instruct',
-      'endpoint': endpoint ?? 'https://integrate.api.nvidia.com/v1',
+      'model': model,
+      'endpoint': endpoint,
     };
   }
 
