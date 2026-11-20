@@ -7,7 +7,7 @@ import 'package:aetherssh/core/theme/app_theme.dart';
 
 class UpiDonationSheet {
   /// The official developer UPI ID
-  static const String currentUpiId = '7074018142@ptani';
+  static const String currentUpiId = '7074018142@ptsbi';
 
   static void show(BuildContext context) {
     final upiUri = Uri.parse(

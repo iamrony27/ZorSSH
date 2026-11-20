@@ -54,62 +54,81 @@ final router = GoRouter(
           ),
           bottomNavigationBar: isKeyboardOpen
               ? const SizedBox.shrink()
-              : Padding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.45),
-                          blurRadius: 24,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              : SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 360),
                         child: Container(
-                          height: 66,
-                          padding: const EdgeInsets.symmetric(vertical: 6.0),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF131722).withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(28),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              _buildNavItem(
-                                context,
-                                0,
-                                LucideIcons.layoutDashboard,
-                                'Dashboard',
-                                _calculateSelectedIndex(context),
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 28,
+                                offset: const Offset(0, 10),
                               ),
-                              _buildNavItem(
-                                context,
-                                1,
-                                LucideIcons.terminal,
-                                'Terminal',
-                                _calculateSelectedIndex(context),
-                              ),
-                              _buildNavItem(
-                                context,
-                                2,
-                                LucideIcons.folderClosed,
-                                'Files',
-                                _calculateSelectedIndex(context),
-                              ),
-                              _buildNavItem(
-                                context,
-                                3,
-                                LucideIcons.settings,
-                                'Settings',
-                                _calculateSelectedIndex(context),
+                              BoxShadow(
+                                color: const Color(0xFF00E676)
+                                    .withValues(alpha: 0.06),
+                                blurRadius: 16,
+                                offset: const Offset(0, 2),
                               ),
                             ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                              child: Container(
+                                height: 64,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131722)
+                                      .withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    _buildNavItem(
+                                      context,
+                                      0,
+                                      LucideIcons.layoutDashboard,
+                                      'Dashboard',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      1,
+                                      LucideIcons.terminal,
+                                      'Terminal',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      2,
+                                      LucideIcons.folderClosed,
+                                      'Files',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      3,
+                                      LucideIcons.settings,
+                                      'Settings',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -119,25 +138,43 @@ final router = GoRouter(
         );
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => _buildSectionPage(
+            key: state.pageKey,
+            child: const HomeScreen(),
+          ),
+        ),
         GoRoute(
           path: '/dashboard/:serverId',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             final serverId = state.pathParameters['serverId']!;
-            return DashboardScreen(serverId: serverId);
+            return _buildSectionPage(
+              key: state.pageKey,
+              child: DashboardScreen(serverId: serverId),
+            );
           },
         ),
         GoRoute(
           path: '/terminal',
-          builder: (context, state) => const TerminalScreen(),
+          pageBuilder: (context, state) => _buildSectionPage(
+            key: state.pageKey,
+            child: const TerminalScreen(),
+          ),
         ),
         GoRoute(
           path: '/files',
-          builder: (context, state) => const FilesScreen(),
+          pageBuilder: (context, state) => _buildSectionPage(
+            key: state.pageKey,
+            child: const FilesScreen(),
+          ),
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const SettingsScreen(),
+          pageBuilder: (context, state) => _buildSectionPage(
+            key: state.pageKey,
+            child: const SettingsScreen(),
+          ),
         ),
       ],
     ),
@@ -145,11 +182,14 @@ final router = GoRouter(
     GoRoute(
       path: '/add-server',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final existingServer = state.extra is Server
             ? state.extra as Server
             : null;
-        return AddServerScreen(existingServer: existingServer);
+        return _buildSubScreenPage(
+          key: state.pageKey,
+          child: AddServerScreen(existingServer: existingServer),
+        );
       },
     ),
     GoRoute(
@@ -161,30 +201,45 @@ final router = GoRouter(
         }
         return null;
       },
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final server = state.extra as Server;
-        return ServerDetailsScreen(server: server);
+        return _buildSubScreenPage(
+          key: state.pageKey,
+          child: ServerDetailsScreen(server: server),
+        );
       },
     ),
     GoRoute(
       path: '/change-pin',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) => const ChangePinScreen(),
+      pageBuilder: (context, state) => _buildSubScreenPage(
+        key: state.pageKey,
+        child: const ChangePinScreen(),
+      ),
     ),
     GoRoute(
       path: '/manage-servers',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) => const ManageServersScreen(),
+      pageBuilder: (context, state) => _buildSubScreenPage(
+        key: state.pageKey,
+        child: const ManageServersScreen(),
+      ),
     ),
     GoRoute(
       path: '/about',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) => const AboutScreen(),
+      pageBuilder: (context, state) => _buildSubScreenPage(
+        key: state.pageKey,
+        child: const AboutScreen(),
+      ),
     ),
     GoRoute(
       path: '/ai-settings',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) => const AiSettingsScreen(),
+      pageBuilder: (context, state) => _buildSubScreenPage(
+        key: state.pageKey,
+        child: const AiSettingsScreen(),
+      ),
     ),
     GoRoute(
       path: '/services',
@@ -195,15 +250,21 @@ final router = GoRouter(
         }
         return null;
       },
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final server = state.extra as Server;
-        return ServiceManagerScreen(server: server);
+        return _buildSubScreenPage(
+          key: state.pageKey,
+          child: ServiceManagerScreen(server: server),
+        );
       },
     ),
     GoRoute(
       path: '/licenses',
       parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) => const LicensesScreen(),
+      pageBuilder: (context, state) => _buildSubScreenPage(
+        key: state.pageKey,
+        child: const LicensesScreen(),
+      ),
     ),
     GoRoute(
       path: '/legal',
@@ -218,16 +279,77 @@ final router = GoRouter(
         }
         return null;
       },
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final args = state.extra as Map<String, dynamic>;
-        return LegalDocumentScreen(
-          title: args['title'] as String,
-          assetPath: args['assetPath'] as String,
+        return _buildSubScreenPage(
+          key: state.pageKey,
+          child: LegalDocumentScreen(
+            title: args['title'] as String,
+            assetPath: args['assetPath'] as String,
+          ),
         );
       },
     ),
   ],
 );
+
+Page<dynamic> _buildSectionPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.0, 0.035),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+Page<dynamic> _buildSubScreenPage({
+  required LocalKey key,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: key,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 280),
+    reverseTransitionDuration: const Duration(milliseconds: 240),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.08, 0.0),
+          end: Offset.zero,
+        ).animate(curvedAnimation),
+        child: FadeTransition(
+          opacity: curvedAnimation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
 
 int _calculateSelectedIndex(BuildContext context) {
   final String location = GoRouterState.of(context).uri.toString();
@@ -281,29 +403,43 @@ Widget _buildNavItem(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? activeColor.withValues(alpha: 0.16)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              icon,
-              color: isSelected ? activeColor : inactiveColor,
-              size: 20,
+          AnimatedScale(
+            scale: isSelected ? 1.08 : 1.0,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutBack,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.symmetric(
+                horizontal: isSelected ? 18 : 12,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? activeColor.withValues(alpha: 0.16)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? activeColor : inactiveColor,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(height: 3),
-          Text(
-            label,
+          AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
             style: GoogleFonts.inter(
               color: isSelected ? activeColor : inactiveColor,
-              fontSize: 10.5,
+              fontSize: isSelected ? 11.0 : 10.5,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
