@@ -91,7 +91,58 @@ class SettingsScreen extends ConsumerWidget {
 
           const SizedBox(height: AppSizes.p24),
 
-          // ── Group 2: App Preferences ──────────────────────────────
+          // ── Group 2: AI Assistant ────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text('AI ASSISTANT', style: AppTheme.sectionTitleStyle),
+          ),
+          SystemCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p16,
+                vertical: AppSizes.p6,
+              ),
+              leading: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF76B900).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.sparkles,
+                  color: Color(0xFF76B900),
+                  size: 18,
+                ),
+              ),
+              title: Text(
+                'AI Provider Settings',
+                style: GoogleFonts.inter(
+                  color: AppTheme.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                'NVIDIA NIM & OpenAI-compatible terminal AI',
+                style: GoogleFonts.inter(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              trailing: const Icon(
+                LucideIcons.chevronRight,
+                color: AppTheme.textSecondary,
+                size: 18,
+              ),
+              onTap: () => context.push('/ai-settings'),
+            ),
+          ),
+
+          const SizedBox(height: AppSizes.p24),
+
+          // ── Group 3: App Preferences ──────────────────────────────
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text('PREFERENCES', style: AppTheme.sectionTitleStyle),

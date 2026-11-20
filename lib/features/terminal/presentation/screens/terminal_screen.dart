@@ -13,6 +13,7 @@ import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/localization/app_localization.dart';
 import 'package:aetherssh/core/utils/error_mapper.dart';
 import 'package:aetherssh/core/widgets/os_icon.dart';
+import 'package:aetherssh/features/terminal/presentation/widgets/ai_command_sheet.dart';
 import 'package:aetherssh/features/terminal/providers/terminal_provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalState;
 
@@ -76,6 +77,17 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
     if (data?.text != null && data!.text!.isNotEmpty) {
       ref.read(terminalProvider.notifier).sendRaw(data.text!);
     }
+  }
+
+  void _openAiCommands(Server? server) {
+    if (server == null) return;
+    AiCommandSheet.show(
+      context,
+      server: server,
+      onExecuteCommand: (command) {
+        ref.read(terminalProvider.notifier).sendRaw('$command\n');
+      },
+    );
   }
 
   @override
@@ -208,6 +220,13 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
                 ],
               ),
             ),
+          ),
+          // AI Commands
+          IconButton(
+            icon: const Icon(LucideIcons.sparkles, size: 18),
+            color: const Color(0xFF76B900),
+            tooltip: 'AI Commands',
+            onPressed: () => _openAiCommands(state.selectedServer),
           ),
           // Clear output
           IconButton(
@@ -694,6 +713,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
           },
           onKeyPress: _processTerminalInput,
           onPaste: _handlePaste,
+          onAiCommands: () => _openAiCommands(state.selectedServer),
         ),
         SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
@@ -815,6 +835,7 @@ class _QuickKeysBar extends StatelessWidget {
     required this.onAltToggle,
     required this.onKeyPress,
     required this.onPaste,
+    required this.onAiCommands,
   });
 
   final Terminal terminal;
@@ -824,6 +845,7 @@ class _QuickKeysBar extends StatelessWidget {
   final VoidCallback onAltToggle;
   final ValueChanged<String> onKeyPress;
   final VoidCallback onPaste;
+  final VoidCallback onAiCommands;
 
   @override
   Widget build(BuildContext context) {
@@ -858,6 +880,40 @@ class _QuickKeysBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
+          // Dedicated AI Commands button
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: SizedBox(
+                height: 36,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFF76B900).withValues(alpha: 0.18),
+                    foregroundColor: const Color(0xFF76B900),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(
+                        color: Color(0xFF76B900),
+                        width: 1,
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                  ),
+                  onPressed: onAiCommands,
+                  icon: const Icon(LucideIcons.sparkles, size: 14),
+                  label: Text(
+                    'AI Commands',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Dedicated Paste button [UI-004]
           Center(
             child: Padding(

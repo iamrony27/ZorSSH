@@ -14,6 +14,7 @@ import 'package:aetherssh/features/settings/presentation/screens/change_pin_scre
 import 'package:aetherssh/features/settings/presentation/screens/about_screen.dart';
 import 'package:aetherssh/features/settings/presentation/screens/licenses_screen.dart';
 import 'package:aetherssh/features/settings/presentation/screens/legal_document_screen.dart';
+import 'package:aetherssh/features/settings/presentation/screens/ai_settings_screen.dart';
 import 'package:aetherssh/core/models/server.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -185,6 +186,11 @@ final router = GoRouter(
       path: '/about',
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const AboutScreen(),
+    ),
+    GoRoute(
+      path: '/ai-settings',
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (context, state) => const AiSettingsScreen(),
     ),
     GoRoute(
       path: '/licenses',

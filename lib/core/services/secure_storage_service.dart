@@ -299,6 +299,45 @@ class SecureStorageService {
     return DateTime.tryParse(val);
   }
 
+  // ── AI Provider Credentials (NVIDIA NIM & Custom) ────────────────────────
+  static const _kAiProvider = 'ai_provider';
+  static const _kAiApiKey = 'ai_api_key';
+  static const _kAiModel = 'ai_model';
+  static const _kAiEndpoint = 'ai_endpoint';
+
+  Future<void> saveAiConfig({
+    required String provider,
+    required String apiKey,
+    required String model,
+    required String endpoint,
+  }) async {
+    await _storage.write(key: _kAiProvider, value: provider.trim());
+    await _storage.write(key: _kAiApiKey, value: apiKey.trim());
+    await _storage.write(key: _kAiModel, value: model.trim());
+    await _storage.write(key: _kAiEndpoint, value: endpoint.trim());
+  }
+
+  Future<Map<String, String?>> readAiConfig() async {
+    final provider = await _read(_kAiProvider);
+    final apiKey = await _read(_kAiApiKey);
+    final model = await _read(_kAiModel);
+    final endpoint = await _read(_kAiEndpoint);
+
+    return {
+      'provider': provider ?? 'nvidia',
+      'apiKey': apiKey,
+      'model': model ?? 'meta/llama-3.1-70b-instruct',
+      'endpoint': endpoint ?? 'https://integrate.api.nvidia.com/v1',
+    };
+  }
+
+  Future<void> deleteAiCredentials() async {
+    await _storage.delete(key: _kAiProvider);
+    await _storage.delete(key: _kAiApiKey);
+    await _storage.delete(key: _kAiModel);
+    await _storage.delete(key: _kAiEndpoint);
+  }
+
   // ── Hive Encryption Key ───────────────────────────────────────────────────
 
   Future<void> saveHiveKey(List<int> key) async {
