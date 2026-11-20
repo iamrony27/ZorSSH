@@ -1,0 +1,86 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'server.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_Server _$ServerFromJson(Map<String, dynamic> json) => _Server(
+  id: json['id'] as String,
+  name: json['name'] as String,
+  hostname: json['hostname'] as String,
+  port: (json['port'] as num).toInt(),
+  username: json['username'] as String,
+  password: json['password'] as String,
+  privateKey: json['privateKey'] as String?,
+  authType: $enumDecode(_$AuthTypeEnumMap, json['authType']),
+  status:
+      $enumDecodeNullable(_$ServerStatusEnumMap, json['status']) ??
+      ServerStatus.unknown,
+  lastCpu: (json['lastCpu'] as num?)?.toDouble(),
+  lastRam: (json['lastRam'] as num?)?.toDouble(),
+  lastDisk: (json['lastDisk'] as num?)?.toDouble(),
+  lastSeen: json['lastSeen'] == null
+      ? null
+      : DateTime.parse(json['lastSeen'] as String),
+  osDistro: json['osDistro'] as String? ?? '',
+  kernelVersion: json['kernelVersion'] as String? ?? '',
+  uptime: json['uptime'] as String? ?? '',
+  hostnameInfo: json['hostnameInfo'] as String? ?? '',
+  ipAddress: json['ipAddress'] as String? ?? '',
+  serverLocation: json['serverLocation'] as String? ?? '',
+  lastLatency: (json['lastLatency'] as num?)?.toInt() ?? 0,
+  lastDiskUsed: (json['lastDiskUsed'] as num?)?.toInt() ?? 0,
+  lastDiskTotal: (json['lastDiskTotal'] as num?)?.toInt() ?? 0,
+  lastRamUsed: (json['lastRamUsed'] as num?)?.toInt() ?? 0,
+  lastRamTotal: (json['lastRamTotal'] as num?)?.toInt() ?? 0,
+  cpuModel: json['cpuModel'] as String? ?? '',
+  cpuCores: (json['cpuCores'] as num?)?.toInt() ?? 0,
+  cpuSpeed: json['cpuSpeed'] as String? ?? '',
+  lastLoad1: (json['lastLoad1'] as num?)?.toDouble() ?? 0.0,
+  lastLoad5: (json['lastLoad5'] as num?)?.toDouble() ?? 0.0,
+  lastLoad15: (json['lastLoad15'] as num?)?.toDouble() ?? 0.0,
+);
+
+Map<String, dynamic> _$ServerToJson(_Server instance) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'hostname': instance.hostname,
+  'port': instance.port,
+  'username': instance.username,
+  'password': instance.password,
+  'privateKey': instance.privateKey,
+  'authType': _$AuthTypeEnumMap[instance.authType]!,
+  'status': _$ServerStatusEnumMap[instance.status]!,
+  'lastCpu': instance.lastCpu,
+  'lastRam': instance.lastRam,
+  'lastDisk': instance.lastDisk,
+  'lastSeen': instance.lastSeen?.toIso8601String(),
+  'osDistro': instance.osDistro,
+  'kernelVersion': instance.kernelVersion,
+  'uptime': instance.uptime,
+  'hostnameInfo': instance.hostnameInfo,
+  'ipAddress': instance.ipAddress,
+  'serverLocation': instance.serverLocation,
+  'lastLatency': instance.lastLatency,
+  'lastDiskUsed': instance.lastDiskUsed,
+  'lastDiskTotal': instance.lastDiskTotal,
+  'lastRamUsed': instance.lastRamUsed,
+  'lastRamTotal': instance.lastRamTotal,
+  'cpuModel': instance.cpuModel,
+  'cpuCores': instance.cpuCores,
+  'cpuSpeed': instance.cpuSpeed,
+  'lastLoad1': instance.lastLoad1,
+  'lastLoad5': instance.lastLoad5,
+  'lastLoad15': instance.lastLoad15,
+};
+
+const _$AuthTypeEnumMap = {AuthType.password: 'password', AuthType.key: 'key'};
+
+const _$ServerStatusEnumMap = {
+  ServerStatus.unknown: 'unknown',
+  ServerStatus.online: 'online',
+  ServerStatus.offline: 'offline',
+  ServerStatus.error: 'error',
+};

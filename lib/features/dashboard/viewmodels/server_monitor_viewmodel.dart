@@ -1,0 +1,851 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/widgets.dart'; // WidgetsBindingObserver
+import 'package:dartssh2/dartssh2.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:aetherssh/core/models/server.dart';
+import 'package:aetherssh/core/utils/linux_parser.dart';
+import 'package:aetherssh/features/dashboard/models/server_stats.dart';
+import 'package:aetherssh/features/dashboard/models/ssh_connection_state.dart';
+import 'package:aetherssh/features/dashboard/repositories/server_repository.dart';
+import 'package:aetherssh/core/services/hive_service.dart';
+import 'package:aetherssh/core/providers.dart';
+import 'package:aetherssh/core/services/secure_storage_service.dart';
+import 'package:aetherssh/core/providers/server_loading_provider.dart';
+import 'package:aetherssh/core/services/geolocation_service.dart';
+import 'package:aetherssh/core/services/host_key_service.dart';
+import 'package:aetherssh/core/utils/error_mapper.dart';
+import 'package:aetherssh/features/settings/providers/settings_provider.dart';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Constants
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Hard limit for every SSH operation (connect + run). If exceeded the
+/// operation is cancelled and the reconnect loop fires.
+const Duration _kSshTimeout = Duration(seconds: 10);
+
+/// Exponential-backoff delays for the reconnect loop (capped at last value).
+const List<int> _kReconnectDelays = [3, 5, 10, 20, 30];
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ViewModel
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// Manages persistent SSH connections, background polling, connectivity
+/// monitoring, and automatic session recovery.
+///
+/// Edge-cases handled:
+/// - App going to background (via [WidgetsBindingObserver]): sessions paused.
+/// - App returning to foreground: all sessions resumed.
+/// - Device network lost/restored (via connectivity_plus): sessions paused/resumed.
+/// - SSH hang / timeout: 10-second hard cap on every SSH operation.
+/// - Race conditions: per-server `_isConnecting` mutex prevents duplicate conns.
+/// - Zombie sockets: every failure path explicitly closes the SSH client.
+/// State class tracking per-server history ticks and connection states.
+/// Allows fine-grained widget subscriptions using .select() [LOGIC-004].
+class ServerMonitorState {
+  final Map<String, int> historyTicks;
+  final Map<String, SshConnectionState> connectionStates;
+
+  const ServerMonitorState({
+    this.historyTicks = const {},
+    this.connectionStates = const {},
+  });
+
+  ServerMonitorState copyWith({
+    Map<String, int>? historyTicks,
+    Map<String, SshConnectionState>? connectionStates,
+  }) {
+    return ServerMonitorState(
+      historyTicks: historyTicks ?? this.historyTicks,
+      connectionStates: connectionStates ?? this.connectionStates,
+    );
+  }
+}
+
+class ServerMonitorViewModel extends AsyncNotifier<ServerMonitorState>
+    with WidgetsBindingObserver {
+  // ── SSH state (per server) ─────────────────────────────────────────────
+  final Map<String, SSHClient> _sshClients = {};
+  final Map<String, Timer> _pollingTimers = {};
+  final Map<String, _CpuState> _cpuStates = {};
+  final Map<String, List<ServerStats>> _serverHistories = {};
+  final Map<String, SshConnectionState> _connectionStates = {};
+
+  // ── Concurrency guards ─────────────────────────────────────────────────
+  /// [Fix 3] Mutex – prevents duplicate SSH connect attempts per server.
+  final Map<String, bool> _isConnecting = {};
+
+  /// Prevents duplicate reconnect loops per server.
+  final Map<String, bool> _reconnectInProgress = {};
+
+  // ── Network / lifecycle ────────────────────────────────────────────────
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  bool _isNetworkAvailable = true;
+
+  /// [Fix 5] Async mutex – serializes server list updates (adds/deletes)
+  /// to prevent race conditions during rapid database changes.
+  Future<void> _updateMutex = Future.value();
+
+  /// Tracks whether the app is visible; set via [didChangeAppLifecycleState].
+  bool _isAppInForeground = true;
+
+  // ── Shared services ────────────────────────────────────────────────────
+  late ServerRepository _repository;
+  late dynamic _sshService;
+  late ServerLoadingNotifier _loadingNotifier;
+
+  static const int _maxHistoryPoints = 60;
+  int _pollIntervalSeconds = 3;
+
+  // ── Build ──────────────────────────────────────────────────────────────
+
+  @override
+  Future<ServerMonitorState> build() async {
+    final hiveBox = await ref.watch(hiveProvider.future);
+    final secureStorage = ref.read(secureStorageServiceProvider);
+    _repository = ServerRepository(hiveBox, secureStorage);
+    _sshService = ref.watch(sshServiceProvider);
+    _loadingNotifier = ref.read(serverLoadingProvider.notifier);
+
+    // Dynamic poll interval
+    ref.listen<int>(pollIntervalProvider, (previous, next) {
+      if (previous != next) {
+        _pollIntervalSeconds = next;
+        _restartAllTimers();
+      }
+    });
+    _pollIntervalSeconds = ref.read(pollIntervalProvider);
+
+    // [Fix 1] Register app lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
+    // Network monitoring
+    await _initConnectivityMonitoring();
+
+    // React to server list changes: handles startup + dynamic add/remove
+    ref.listen<AsyncValue<List<Server>>>(serverListStreamProvider, (
+      previous,
+      next,
+    ) {
+      _updateMutex = _updateMutex.then((_) async {
+        final newList = next.value;
+        if (newList == null) return;
+
+        final newIds = newList.map((s) => s.id).toSet();
+        final currentIds = Set<String>.from(_connectionStates.keys);
+
+        // Start monitoring newly added servers
+        for (final id in newIds.difference(currentIds)) {
+          await startMonitoring(id);
+        }
+
+        // Stop monitoring deleted servers
+        for (final id in currentIds.difference(newIds)) {
+          await stopMonitoring(id);
+        }
+      });
+    }, fireImmediately: true);
+
+    ref.onDispose(() {
+      // [Fix 1] Deregister observer
+      WidgetsBinding.instance.removeObserver(this);
+      _connectivitySub?.cancel();
+      stopAllMonitoring();
+    });
+
+    return ServerMonitorState(
+      connectionStates: Map.unmodifiable(_connectionStates),
+    );
+  }
+
+  // ── App Lifecycle Observer [Fix 1] ─────────────────────────────────────
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        if (_isAppInForeground) {
+          _isAppInForeground = false;
+          debugPrint('ServerMonitor: App → background — suspending sessions');
+          _suspendAllSessions();
+        }
+      case AppLifecycleState.resumed:
+        if (!_isAppInForeground) {
+          _isAppInForeground = true;
+          debugPrint('ServerMonitor: App → foreground — resuming sessions');
+          _resumeAllSessions();
+        }
+      case AppLifecycleState.inactive:
+        // Nothing — transient state (e.g., during phone call)
+        break;
+    }
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────
+
+  List<ServerStats> getHistory(String serverId) =>
+      _serverHistories[serverId] ?? [];
+
+  SshConnectionState getConnectionState(String serverId) =>
+      _connectionStates[serverId] ?? SshConnectionState.connecting;
+
+  void clearServerHistory(String serverId) {
+    _serverHistories[serverId] = [];
+    _notifyHistoryUpdated(serverId);
+  }
+
+  Future<void> startMonitoring(String serverId) async {
+    if (_pollingTimers.containsKey(serverId)) return;
+
+    _serverHistories.putIfAbsent(serverId, () => []);
+    _setConnectionState(serverId, SshConnectionState.connecting);
+    _loadingNotifier.startLoading(serverId);
+
+    debugPrint('ServerMonitor: Starting monitoring for $serverId');
+    await _connectAndStartPolling(serverId);
+  }
+
+  Future<void> stopMonitoring(String serverId) async {
+    _pollingTimers[serverId]?.cancel();
+    _pollingTimers.remove(serverId);
+    _isConnecting.remove(serverId);
+    _reconnectInProgress.remove(serverId);
+    _closeClient(serverId); // [Fix 4] Always dispose socket
+    _cpuStates.remove(serverId);
+    _serverHistories.remove(serverId);
+    _connectionStates.remove(serverId);
+    await _repository.setStatus(serverId, ServerStatus.offline);
+  }
+
+  Future<void> stopAllMonitoring() async {
+    for (final id in List<String>.from(_connectionStates.keys)) {
+      await stopMonitoring(id);
+    }
+  }
+
+  /// Safely stops all monitoring sessions, waits for teardown, and restarts them [LOGIC-007].
+  /// Used by pull-to-refresh on HomeScreen to eliminate race conditions and badge flickering.
+  Future<void> refreshAll() async {
+    debugPrint('ServerMonitor: Refreshing all server connections');
+    await stopAllMonitoring();
+    final servers = await _repository.getAllServers();
+    for (final server in servers) {
+      await startMonitoring(server.id);
+    }
+  }
+
+  /// Tears down the existing SSH session for [serverId] and re-initiates a
+  /// fresh connection using the latest credentials from the database.
+  ///
+  /// Call this immediately after an "Edit Server" save so that a stale
+  /// SSH client is never used with invalid or outdated credentials.
+  Future<void> reinitializeServer(String serverId) async {
+    debugPrint('ServerMonitor: Reinitializing server $serverId after edit');
+
+    // 1. Cancel any in-flight polling timer.
+    _pollingTimers[serverId]?.cancel();
+    _pollingTimers.remove(serverId);
+
+    // 2. Close the stale SSH client.
+    _closeClient(serverId);
+
+    // 3. Release all concurrency guards so the fresh connect can proceed.
+    _isConnecting[serverId] = false;
+    _reconnectInProgress[serverId] = false;
+
+    // 4. Reset CPU delta — the old state references the wrong session.
+    _cpuStates.remove(serverId);
+
+    // 5. Keep the server tracked but transition to connecting state.
+    _setConnectionState(serverId, SshConnectionState.connecting);
+    _loadingNotifier.startLoading(serverId);
+
+    // 6. Kick off a new connection with fresh credentials from the DB.
+    await _connectAndStartPolling(serverId);
+  }
+
+  // ── Lifecycle helpers ──────────────────────────────────────────────────
+
+  /// Pauses all active sessions without removing servers from tracking.
+  void _suspendAllSessions() {
+    for (final id in List<String>.from(_connectionStates.keys)) {
+      _pollingTimers[id]?.cancel();
+      _pollingTimers.remove(id);
+      _closeClient(id); // [Fix 4]
+      _isConnecting[id] = false;
+      _reconnectInProgress[id] = false;
+      _setConnectionState(id, SshConnectionState.offline);
+    }
+  }
+
+  /// Resumes sessions that were suspended due to backgrounding.
+  void _resumeAllSessions() {
+    if (!_isNetworkAvailable) return; // Network lost — wait for restore
+    for (final id in List<String>.from(_connectionStates.keys)) {
+      if (!_pollingTimers.containsKey(id)) {
+        _reconnectServer(id);
+      }
+    }
+  }
+
+  // ── Connectivity monitoring ────────────────────────────────────────────
+
+  Future<void> _initConnectivityMonitoring() async {
+    final initial = await Connectivity().checkConnectivity();
+    _isNetworkAvailable = initial.any(_isUsableNetwork);
+
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _onConnectivityChanged,
+    );
+    debugPrint(
+      'ServerMonitor: Network monitoring started (${_isNetworkAvailable ? "online" : "offline"})',
+    );
+  }
+
+  bool _isUsableNetwork(ConnectivityResult r) =>
+      r == ConnectivityResult.wifi ||
+      r == ConnectivityResult.mobile ||
+      r == ConnectivityResult.ethernet ||
+      r == ConnectivityResult.vpn;
+
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    final hasNetwork = results.any(_isUsableNetwork);
+    if (!hasNetwork && _isNetworkAvailable) {
+      _isNetworkAvailable = false;
+      debugPrint('ServerMonitor: Network LOST — pausing all polling');
+      _handleNetworkLost();
+    } else if (hasNetwork && !_isNetworkAvailable) {
+      _isNetworkAvailable = true;
+      debugPrint('ServerMonitor: Network RESTORED — resuming polling');
+      _handleNetworkRestored();
+    }
+  }
+
+  void _handleNetworkLost() {
+    for (final id in List<String>.from(_connectionStates.keys)) {
+      _pollingTimers[id]?.cancel();
+      _pollingTimers.remove(id);
+      _isConnecting[id] = false;
+      _reconnectInProgress[id] = false;
+      _closeClient(id); // [Fix 4]
+      _setConnectionState(id, SshConnectionState.offline);
+      _repository.setStatus(id, ServerStatus.offline);
+    }
+  }
+
+  void _handleNetworkRestored() {
+    if (!_isAppInForeground) return; // App is in background — skip
+    for (final id in List<String>.from(_connectionStates.keys)) {
+      if (!_pollingTimers.containsKey(id)) {
+        _reconnectServer(id);
+      }
+    }
+  }
+
+  // ── SSH Connect & Poll ─────────────────────────────────────────────────
+
+  /// [Fix 3] Mutex-guarded connect. Returns early if a connection attempt is
+  /// already in flight for this server.
+  Future<void> _connectAndStartPolling(String serverId) async {
+    if (_isConnecting[serverId] == true) {
+      debugPrint(
+        'ServerMonitor: Connect already in progress for $serverId — skipping',
+      );
+      return;
+    }
+    _isConnecting[serverId] = true;
+
+    final server = await _repository.getServerById(serverId);
+    if (server == null) {
+      _isConnecting[serverId] = false;
+      _loadingNotifier.markError(serverId, 'Server not found');
+      return;
+    }
+
+    try {
+      // [Fix 2] Enforce 10-second timeout on SSH connect
+      final client = await _sshService
+          .connect(server.hostname, server.port, server.username, server.id)
+          .timeout(_kSshTimeout);
+
+      if (client == null) throw Exception('SSH connection returned null');
+
+      // Abandonment check: if the connection was cancelled while in-flight,
+      // close the client and return to avoid a zombie polling timer.
+      if (_isConnecting[serverId] != true) {
+        debugPrint(
+          'ServerMonitor: Connection abandoned for $serverId - closing',
+        );
+        client.close();
+        return;
+      }
+
+      _sshClients[serverId] = client;
+      _cpuStates[serverId] = _CpuState(prevIdle: 0, prevTotal: 0);
+      _setConnectionState(serverId, SshConnectionState.connected);
+      await _repository.setStatus(serverId, ServerStatus.online);
+
+      // Cancel any stale timer before creating a new one [Fix 3]
+      _pollingTimers[serverId]?.cancel();
+      _pollingTimers[serverId] = Timer.periodic(
+        Duration(seconds: _pollIntervalSeconds),
+        (_) => _pollServer(serverId),
+      );
+
+      await _pollServer(serverId);
+      _loadingNotifier.markLoaded(serverId);
+    } on TimeoutException {
+      debugPrint('ServerMonitor: SSH connect timed out for $serverId');
+      _closeClient(serverId);
+      _setConnectionState(serverId, SshConnectionState.reconnecting);
+      await _repository.setStatus(serverId, ServerStatus.error);
+      _loadingNotifier.markError(serverId, 'Connection Timed Out');
+      _triggerReconnect(serverId);
+    } on SocketException catch (e) {
+      debugPrint('ServerMonitor: SocketException for $serverId: $e');
+      _closeClient(serverId);
+      await _repository.setStatus(serverId, ServerStatus.error);
+      _loadingNotifier.markError(
+        serverId,
+        'Host Unreachable: Check IP or Port',
+      );
+      _setConnectionState(serverId, SshConnectionState.reconnecting);
+      _triggerReconnect(serverId);
+    } on HostKeyMismatchException catch (e) {
+      debugPrint('ServerMonitor: Host key mismatch for $serverId: $e');
+      _closeClient(serverId);
+      await _repository.setStatus(serverId, ServerStatus.error);
+      _loadingNotifier.markError(
+        serverId,
+        'Host Key Mismatch: Remote server fingerprint changed',
+      );
+      _setConnectionState(serverId, SshConnectionState.offline);
+    } catch (e) {
+      final msg = e.toString();
+      debugPrint('ServerMonitor: Initial connect failed for $serverId: $msg');
+      _closeClient(serverId);
+      await _repository.setStatus(serverId, ServerStatus.error);
+
+      if (_isFatalAuthError(e)) {
+        _loadingNotifier.markError(
+          serverId,
+          'Authentication Failed: Invalid Username or Password/Key',
+        );
+        _setConnectionState(serverId, SshConnectionState.offline);
+      } else {
+        _loadingNotifier.markError(
+          serverId,
+          ErrorMapper.userFriendlyMessage(e),
+        );
+        _setConnectionState(serverId, SshConnectionState.reconnecting);
+        _triggerReconnect(serverId);
+      }
+    } finally {
+      _isConnecting[serverId] = false; // Always release the mutex
+    }
+  }
+
+  /// Poll a single server; triggers reconnect loop on any connection-level error.
+  Future<void> _pollServer(String serverId) async {
+    final client = _sshClients[serverId];
+    final cpuState = _cpuStates[serverId];
+    if (client == null || cpuState == null) return;
+
+    try {
+      final stopwatch = Stopwatch()..start();
+
+      // [Fix 2] Hard 10s timeout on SSH run
+      final result = await client
+          .run(LinuxParser.linuxMetricsCommand)
+          .timeout(_kSshTimeout);
+      stopwatch.stop();
+
+      final rawOutput = utf8.decode(result).trim();
+      final latencyMs = stopwatch.elapsedMilliseconds;
+
+      ServerStats stats = await _parseInIsolate(
+        rawOutput,
+        cpuState.prevIdle,
+        cpuState.prevTotal,
+        latencyMs,
+      );
+
+      // Geolocation (cached per server)
+      String serverLoc = '';
+      final current = await _repository.getServerById(serverId);
+      if (current != null) serverLoc = current.serverLocation;
+      if (serverLoc.isEmpty && stats.ipAddress.isNotEmpty) {
+        try {
+          serverLoc = await GeolocationService.getLocationFromIp(
+            stats.ipAddress,
+          );
+        } catch (_) {}
+      }
+      stats = stats.copyWith(serverLocation: serverLoc);
+
+      _cpuStates[serverId] = _CpuState(
+        prevIdle: stats.cpuIdle,
+        prevTotal: stats.cpuTotal,
+      );
+
+      final history = _serverHistories[serverId] ?? [];
+      history.add(stats);
+      if (history.length > _maxHistoryPoints) history.removeAt(0);
+      _serverHistories[serverId] = history;
+
+      if (_connectionStates[serverId] != SshConnectionState.connected) {
+        _setConnectionState(serverId, SshConnectionState.connected);
+      }
+
+      _notifyHistoryUpdated(serverId);
+      await _repository.updateSnapshot(serverId, stats);
+    } on TimeoutException catch (e) {
+      debugPrint('ServerMonitor: Poll timed out for $serverId: $e');
+      _triggerReconnect(serverId);
+    } on SocketException catch (e) {
+      debugPrint('ServerMonitor: Socket error for $serverId: $e');
+      _triggerReconnect(serverId);
+    } catch (e) {
+      final msg = e.toString();
+      debugPrint('ServerMonitor: Poll error for $serverId: $msg');
+      if (_isConnectionError(msg)) {
+        _triggerReconnect(serverId);
+      } else {
+        await _repository.setStatus(serverId, ServerStatus.offline);
+        final ls = _loadingNotifier.getServerState(serverId);
+        if (!ls.hasLoadedOnce) _loadingNotifier.markError(serverId, msg);
+      }
+    }
+  }
+
+  // ── Reconnect logic ────────────────────────────────────────────────────
+
+  /// Stops the failing timer, closes dead client, and launches reconnect loop.
+  void _triggerReconnect(String serverId) {
+    if (_reconnectInProgress[serverId] == true) return;
+    if (!_connectionStates.containsKey(serverId)) return;
+
+    _pollingTimers[serverId]?.cancel();
+    _pollingTimers.remove(serverId);
+    _closeClient(serverId); // [Fix 4]
+    _isConnecting[serverId] = false; // Release mutex so reconnect can proceed
+
+    _setConnectionState(serverId, SshConnectionState.reconnecting);
+    _repository.setStatus(serverId, ServerStatus.offline);
+
+    _reconnectServer(serverId);
+  }
+
+  /// Exponential-backoff loop. Stops when server is reconnected or removed.
+  Future<void> _reconnectServer(String serverId) async {
+    if (_reconnectInProgress[serverId] == true) return;
+    _reconnectInProgress[serverId] = true;
+
+    int attempt = 0;
+
+    while (true) {
+      if (!_connectionStates.containsKey(serverId)) break; // Server deleted
+      if (!_isNetworkAvailable) {
+        debugPrint('ServerMonitor: Reconnect aborted — no network');
+        _setConnectionState(serverId, SshConnectionState.offline);
+        break;
+      }
+      if (!_isAppInForeground) {
+        debugPrint('ServerMonitor: Reconnect aborted — app in background');
+        _setConnectionState(serverId, SshConnectionState.offline);
+        break;
+      }
+
+      final delay =
+          _kReconnectDelays[attempt.clamp(0, _kReconnectDelays.length - 1)];
+      debugPrint(
+        'ServerMonitor: Reconnect attempt ${attempt + 1} for $serverId in ${delay}s',
+      );
+      await Future.delayed(Duration(seconds: delay));
+
+      if (!_connectionStates.containsKey(serverId)) break;
+
+      final server = await _repository.getServerById(serverId);
+      if (server == null) break;
+
+      _setConnectionState(serverId, SshConnectionState.connecting);
+
+      // [Fix 3] Check mutex before SSH attempt
+      if (_isConnecting[serverId] == true) {
+        attempt++;
+        continue;
+      }
+      _isConnecting[serverId] = true;
+
+      try {
+        // [Fix 2] 10-second hard timeout on reconnect connect
+        final client = await _sshService
+            .connect(server.hostname, server.port, server.username, server.id)
+            .timeout(_kSshTimeout);
+
+        if (client == null) throw Exception('Connection returned null');
+
+        _sshClients[serverId] = client;
+        _cpuStates[serverId] = _CpuState(prevIdle: 0, prevTotal: 0);
+        _setConnectionState(serverId, SshConnectionState.connected);
+        await _repository.setStatus(serverId, ServerStatus.online);
+
+        // Cancel stale timer before starting new one [Fix 3]
+        _pollingTimers[serverId]?.cancel();
+        _pollingTimers[serverId] = Timer.periodic(
+          Duration(seconds: _pollIntervalSeconds),
+          (_) => _pollServer(serverId),
+        );
+        await _pollServer(serverId);
+
+        debugPrint(
+          'ServerMonitor: Reconnected $serverId after ${attempt + 1} attempt(s)',
+        );
+        break; // Success — exit loop
+      } on TimeoutException {
+        debugPrint('ServerMonitor: Reconnect timed out for $serverId');
+        _closeClient(serverId);
+        _setConnectionState(serverId, SshConnectionState.reconnecting);
+        _loadingNotifier.markError(serverId, 'Connection Timed Out');
+        attempt++;
+      } on SocketException catch (e) {
+        debugPrint('ServerMonitor: Reconnect socket error for $serverId: $e');
+        _closeClient(serverId);
+        _setConnectionState(serverId, SshConnectionState.reconnecting);
+        _loadingNotifier.markError(
+          serverId,
+          'Host Unreachable: Check IP or Port',
+        );
+        attempt++;
+      } on HostKeyMismatchException catch (e) {
+        debugPrint(
+          'ServerMonitor: Reconnect host key mismatch for $serverId: $e',
+        );
+        _closeClient(serverId);
+        _setConnectionState(serverId, SshConnectionState.offline);
+        await _repository.setStatus(serverId, ServerStatus.error);
+        _loadingNotifier.markError(
+          serverId,
+          'Host Key Mismatch: Remote server fingerprint changed',
+        );
+        break; // Stop reconnect loop for security: requires user intervention
+      } catch (e) {
+        final msg = e.toString();
+        debugPrint(
+          'ServerMonitor: Reconnect attempt failed for $serverId: $msg',
+        );
+        _closeClient(serverId);
+
+        // HALT ON GENUINE FATAL AUTH FAILURE
+        if (_isFatalAuthError(e)) {
+          debugPrint(
+            'ServerMonitor: FATAL auth error. Aborting reconnect loop.',
+          );
+          _loadingNotifier.markError(
+            serverId,
+            'Authentication Failed: Invalid Username or Password/Key',
+          );
+          _setConnectionState(serverId, SshConnectionState.offline);
+          await _repository.setStatus(serverId, ServerStatus.error);
+          break; // Exit the while(true) loop immediately
+        }
+
+        _setConnectionState(serverId, SshConnectionState.reconnecting);
+        _loadingNotifier.markError(
+          serverId,
+          ErrorMapper.userFriendlyMessage(e),
+        );
+        attempt++;
+      } finally {
+        _isConnecting[serverId] = false; // Always release [Fix 3]
+      }
+    }
+
+    _reconnectInProgress.remove(serverId);
+  }
+
+  // ── Timer management ───────────────────────────────────────────────────
+
+  void _restartAllTimers() {
+    for (final id in List<String>.from(_pollingTimers.keys)) {
+      _pollingTimers[id]?.cancel(); // [Fix 3] Cancel before replacing
+      _pollingTimers[id] = Timer.periodic(
+        Duration(seconds: _pollIntervalSeconds),
+        (_) => _pollServer(id),
+      );
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+
+  /// [Fix 4] Safe client close — swallows errors from dead sockets.
+  void _closeClient(String serverId) {
+    try {
+      _sshClients[serverId]?.close();
+    } catch (e) {
+      debugPrint(
+        'ServerMonitor: Error closing client for $serverId (safe to ignore): $e',
+      );
+    } finally {
+      _sshClients.remove(serverId);
+    }
+  }
+
+  void _setConnectionState(String serverId, SshConnectionState s) {
+    _connectionStates[serverId] = s;
+    final current = state.asData?.value ?? const ServerMonitorState();
+    final updatedConns = Map<String, SshConnectionState>.from(
+      current.connectionStates,
+    );
+    updatedConns[serverId] = s;
+    state = AsyncValue.data(current.copyWith(connectionStates: updatedConns));
+  }
+
+  void _notifyHistoryUpdated(String serverId) {
+    final current = state.asData?.value ?? const ServerMonitorState();
+    final updatedTicks = Map<String, int>.from(current.historyTicks);
+    updatedTicks[serverId] = (updatedTicks[serverId] ?? 0) + 1;
+    state = AsyncValue.data(current.copyWith(historyTicks: updatedTicks));
+  }
+
+  bool _isConnectionError(String message) {
+    final m = message.toLowerCase();
+    return m.contains('socket') ||
+        m.contains('connection') ||
+        m.contains('ssh') ||
+        m.contains('closed') ||
+        m.contains('reset') ||
+        m.contains('broken pipe') ||
+        m.contains('timeout') ||
+        m.contains('eof');
+  }
+
+  /// Distinguishes true, permanent credential rejection from transient connection/handshake drops.
+  bool _isFatalAuthError(dynamic e) {
+    if (e is SSHAuthFailError) return true;
+    if (e is SSHKeyDecryptError) return true;
+    final msg = e.toString().toLowerCase();
+    // Transient socket drops or connection closures before authentication are NOT fatal auth errors.
+    if (msg.contains('connection closed before authentication') ||
+        msg.contains('closed before authentication') ||
+        msg.contains('connection refused') ||
+        msg.contains('network is unreachable') ||
+        msg.contains('host unreachable') ||
+        msg.contains('timed out')) {
+      return false;
+    }
+    // Genuine credential / permission rejection errors:
+    if (msg.contains('all authentication methods failed') ||
+        msg.contains('invalid passphrase') ||
+        msg.contains('invalid private key') ||
+        msg.contains('invalid username or password') ||
+        msg.contains('permission denied')) {
+      return true;
+    }
+    return false;
+  }
+
+  // ── Isolate parsing ────────────────────────────────────────────────────
+
+  Future<ServerStats> _parseInIsolate(
+    String rawOutput,
+    int prevIdle,
+    int prevTotal,
+    int latencyMs,
+  ) async {
+    // [LOGIC-007]: Only offload to Isolate if payload is unusually large (>32KB).
+    // Standard Linux stats payloads are 1-2KB, where Isolate.run thread spawning overhead
+    // thrashes OS threads and causes excessive battery drain every 3 seconds.
+    if (rawOutput.length > 32768) {
+      return Isolate.run(
+        () => _parseInIsolateHelper(
+          _ParseParams(
+            rawOutput: rawOutput,
+            prevIdle: prevIdle,
+            prevTotal: prevTotal,
+            latencyMs: latencyMs,
+          ),
+        ),
+      );
+    }
+    return _parseInIsolateHelper(
+      _ParseParams(
+        rawOutput: rawOutput,
+        prevIdle: prevIdle,
+        prevTotal: prevTotal,
+        latencyMs: latencyMs,
+      ),
+    );
+  }
+
+  static ServerStats _parseInIsolateHelper(_ParseParams params) {
+    try {
+      final statsMap = LinuxParser.parseAll(
+        params.rawOutput,
+        prevIdle: params.prevIdle,
+        prevTotal: params.prevTotal,
+      );
+      return ServerStats(
+        cpuPct: statsMap['cpuPct'],
+        ramPct: statsMap['ramPct'],
+        diskPct: statsMap['diskPct'],
+        uptime: statsMap['uptime'],
+        cpuIdle: statsMap['cpuIdle'],
+        cpuTotal: statsMap['cpuTotal'],
+        latencyMs: params.latencyMs,
+        timestamp: DateTime.now(),
+        hostname: statsMap['hostname'],
+        ipAddress: statsMap['ipAddress'],
+        osDistro: statsMap['osDistro'],
+        kernelVersion: statsMap['kernelVersion'],
+        diskUsed: statsMap['diskUsed'] ?? 0,
+        diskTotal: statsMap['diskTotal'] ?? 0,
+        ramUsed: statsMap['ramUsed'] ?? 0,
+        ramTotal: statsMap['ramTotal'] ?? 0,
+        cpuModel: statsMap['cpuModel'] ?? '',
+        cpuCores: statsMap['cpuCores'] ?? 0,
+        cpuSpeed: statsMap['cpuSpeed'] ?? '',
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Isolate Parsing Error: $e\n$stackTrace');
+      return ServerStats(
+        cpuPct: 0.0,
+        ramPct: 0.0,
+        diskPct: 0.0,
+        uptime: 'Error',
+        cpuIdle: params.prevIdle,
+        cpuTotal: params.prevTotal,
+        latencyMs: params.latencyMs,
+        timestamp: DateTime.now(),
+      );
+    }
+  }
+}
+
+// ── Supporting types ─────────────────────────────────────────────────────────
+
+class _CpuState {
+  final int prevIdle;
+  final int prevTotal;
+  const _CpuState({required this.prevIdle, required this.prevTotal});
+}
+
+class _ParseParams {
+  final String rawOutput;
+  final int prevIdle;
+  final int prevTotal;
+  final int latencyMs;
+  const _ParseParams({
+    required this.rawOutput,
+    required this.prevIdle,
+    required this.prevTotal,
+    required this.latencyMs,
+  });
+}
