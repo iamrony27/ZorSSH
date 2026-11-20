@@ -13,6 +13,7 @@ import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/localization/app_localization.dart';
 import 'package:aetherssh/core/utils/error_mapper.dart';
 import 'package:aetherssh/core/widgets/os_icon.dart';
+import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
 import 'package:aetherssh/features/terminal/presentation/widgets/ai_command_sheet.dart';
 import 'package:aetherssh/features/terminal/providers/terminal_provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalState;
@@ -227,6 +228,20 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
             color: const Color(0xFF76B900),
             tooltip: 'AI Commands',
             onPressed: () => _openAiCommands(state.selectedServer),
+          ),
+          // Sync Clipboard to PC
+          IconButton(
+            icon: const Icon(LucideIcons.clipboardCopy, size: 18),
+            color: Colors.blueAccent,
+            tooltip: 'Sync Clipboard to PC',
+            onPressed: () {
+              if (state.selectedServer != null) {
+                ClipboardSyncSheet.show(
+                  context,
+                  server: state.selectedServer!,
+                );
+              }
+            },
           ),
           // Clear output
           IconButton(
@@ -714,6 +729,11 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
           onKeyPress: _processTerminalInput,
           onPaste: _handlePaste,
           onAiCommands: () => _openAiCommands(state.selectedServer),
+          onSyncClipboard: () {
+            if (state.selectedServer != null) {
+              ClipboardSyncSheet.show(context, server: state.selectedServer!);
+            }
+          },
         ),
         SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
@@ -836,6 +856,7 @@ class _QuickKeysBar extends StatelessWidget {
     required this.onKeyPress,
     required this.onPaste,
     required this.onAiCommands,
+    this.onSyncClipboard,
   });
 
   final Terminal terminal;
@@ -846,6 +867,7 @@ class _QuickKeysBar extends StatelessWidget {
   final ValueChanged<String> onKeyPress;
   final VoidCallback onPaste;
   final VoidCallback onAiCommands;
+  final VoidCallback? onSyncClipboard;
 
   @override
   Widget build(BuildContext context) {
@@ -950,6 +972,40 @@ class _QuickKeysBar extends StatelessWidget {
               ),
             ),
           ),
+          if (onSyncClipboard != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: SizedBox(
+                  height: 36,
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.12),
+                      foregroundColor: Colors.blueAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(
+                          color: Colors.blueAccent.withValues(alpha: 0.3),
+                          width: 0.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      minimumSize: const Size(64, 36),
+                    ),
+                    onPressed: onSyncClipboard,
+                    icon: const Icon(LucideIcons.clipboardCopy, size: 14),
+                    label: Text(
+                      'PC CLIP',
+                      style: GoogleFonts.firaCode(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ...keys.map((key) {
             final isCtrl = key.$1 == 'CTRL';
             final isAlt = key.$1 == 'ALT';

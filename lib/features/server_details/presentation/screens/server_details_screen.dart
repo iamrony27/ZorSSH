@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:aetherssh/core/models/server.dart';
 import 'package:aetherssh/core/providers.dart';
 import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/utils/error_mapper.dart';
+import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
 import 'package:aetherssh/core/widgets/system_card.dart';
 
 class ServerDetailsScreen extends ConsumerStatefulWidget {
@@ -293,6 +295,59 @@ class _ServerDetailsScreenState extends ConsumerState<ServerDetailsScreen> {
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SystemCard(
+              title: 'Remote Tools',
+              child: Column(
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppTheme.terminalMint.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(LucideIcons.activity, color: AppTheme.terminalMint, size: 18),
+                    ),
+                    title: Text(
+                      'Active Services',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      'Manage background services (start, stop, restart)',
+                      style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 12),
+                    ),
+                    trailing: const Icon(LucideIcons.chevronRight, color: Colors.white54, size: 18),
+                    onTap: () => context.push('/services', extra: widget.server),
+                  ),
+                  Divider(color: Colors.white.withValues(alpha: 0.05), height: 16),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(LucideIcons.clipboardCopy, color: Colors.blueAccent, size: 18),
+                    ),
+                    title: Text(
+                      'Shared Clipboard',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      'Send Android clipboard text to remote PC clipboard',
+                      style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 12),
+                    ),
+                    trailing: const Icon(LucideIcons.chevronRight, color: Colors.white54, size: 18),
+                    onTap: () => ClipboardSyncSheet.show(context, server: widget.server),
+                  ),
                 ],
               ),
             ),

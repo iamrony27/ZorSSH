@@ -24,6 +24,7 @@ import 'package:aetherssh/features/dashboard/widgets/system_info_card.dart';
 
 import 'package:aetherssh/features/dashboard/presentation/widgets/base_metric_card.dart';
 import 'package:aetherssh/features/dashboard/widgets/disk_usage_gauge.dart';
+import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final String serverId;
@@ -311,6 +312,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Navigator.pop(ctx);
                         if (server != null) {
                           _duplicateServer(context, server);
+                        }
+                      },
+                    ),
+                    // ── Active Services ──────────────────────────────────
+                    ListTile(
+                      leading: const Icon(
+                        LucideIcons.activity,
+                        color: AppTheme.terminalMint,
+                        size: 20,
+                      ),
+                      title: Text(
+                        'Active Services',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Inspect, start, stop, or restart system services',
+                        style: GoogleFonts.inter(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        if (server != null) {
+                          context.push('/services', extra: server);
+                        }
+                      },
+                    ),
+                    // ── Shared Clipboard ──────────────────────────────────
+                    ListTile(
+                      leading: const Icon(
+                        LucideIcons.clipboardCopy,
+                        color: Colors.blueAccent,
+                        size: 20,
+                      ),
+                      title: Text(
+                        'Shared Clipboard',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Send Android clipboard to PC clipboard',
+                        style: GoogleFonts.inter(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        if (server != null) {
+                          ClipboardSyncSheet.show(context, server: server);
                         }
                       },
                     ),

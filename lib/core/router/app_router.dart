@@ -15,6 +15,7 @@ import 'package:aetherssh/features/settings/presentation/screens/about_screen.da
 import 'package:aetherssh/features/settings/presentation/screens/licenses_screen.dart';
 import 'package:aetherssh/features/settings/presentation/screens/legal_document_screen.dart';
 import 'package:aetherssh/features/settings/presentation/screens/ai_settings_screen.dart';
+import 'package:aetherssh/features/services/presentation/screens/service_manager_screen.dart';
 import 'package:aetherssh/core/models/server.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -191,6 +192,20 @@ final router = GoRouter(
       path: '/ai-settings',
       parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const AiSettingsScreen(),
+    ),
+    GoRoute(
+      path: '/services',
+      parentNavigatorKey: rootNavigatorKey,
+      redirect: (context, state) {
+        if (state.extra is! Server) {
+          return '/';
+        }
+        return null;
+      },
+      builder: (context, state) {
+        final server = state.extra as Server;
+        return ServiceManagerScreen(server: server);
+      },
     ),
     GoRoute(
       path: '/licenses',

@@ -4,19 +4,21 @@ import 'package:aetherssh/core/services/os_detector.dart';
 
 class OsIconWidget extends StatelessWidget {
   final String osDistro;
+  final OsInfo? osInfo;
   final double size;
 
   const OsIconWidget({
     super.key,
-    required this.osDistro,
+    this.osDistro = '',
+    this.osInfo,
     this.size = 20,
   });
 
   @override
   Widget build(BuildContext context) {
-    final osInfo = OsInfo.fromDistroString(osDistro);
+    final info = osInfo ?? OsInfo.fromDistroString(osDistro);
 
-    switch (osInfo.distroKey) {
+    switch (info.distroKey) {
       case 'windows':
         return _buildWindowsLogo(size);
       case 'ubuntu':
