@@ -1,18 +1,38 @@
 # STATE — AetherSSH
 
 ## Current Position
-- Phase: Phase 6 & 7 — Full Verification & Production Android Release APK Build
-- Status: Ready to start
-- Completed Phases:
-  - Phase 0: Research & Analysis (Complete — Orbit repo inspected, download bug diagnosed, architecture analyzed).
-  - Phase 1: Application Identity & Foundation (Complete — AetherSSH name, package `com.aetherssh.app`, logo, launcher icons, dependency graph, Dart analyzer verified, commit `e8b9cab`).
-  - Phase 2: Core Architecture, OS Detection & Fix SFTP Download (Complete — OS Detection engine, Storage helper, full Download Manager with speed/progress/duplicate protection, fixed SFTP download directly to Android Downloads, 107 tests passing, commit `3fc0f52`).
-  - Phase 3: AI Engine & NVIDIA NIM Integration (Complete — NVIDIA NIM + OpenAI-compatible endpoint support, secure API key storage in Keystore, OS-aware prompt engineering, clean command extraction, dangerous command safeguards, AI settings screen, first-time setup wizard, and Terminal Quick Bar "AI Commands" sheet with one-click RUN, 117 tests passing, commit `73e9e6d`).
-  - Phase 4: Active Service Management & Shared Clipboard (Complete — `ServiceManagementService` querying Linux `systemctl` & Windows PowerShell `Get-Service`, Start/Stop/Restart with sudo retry & safety confirmations, `ServiceManagerScreen` with search & status filters, `ClipboardSyncService` with zero remote dependencies supporting `wl-copy`/`xclip`/`xsel` on Linux & `Set-Clipboard` on Windows, and `ClipboardSyncSheet` accessible from Terminal, Server Details, and Dashboard, commit `a3e1ff5`).
-  - Phase 5: Enhanced Live Resource Monitor (Complete — `WindowsParser` for PowerShell WMI/CIM telemetry, Linux 11-part metrics parser, `GpuStats` real NVIDIA GPU metrics parsing, `ProcessItem` top processes parsing, `GpuMetricCard` and `TopProcessesCard` widgets in `DashboardScreen`, 131 tests passing).
+- Status: ALL PHASES COMPLETE & PRODUCTION READY
+- Release Binary: `build/app/outputs/flutter-apk/app-release.apk` (70 MB)
+- Test Suite: 131 tests passing (100% pass rate)
+- Static Analysis: 0 errors, 0 warnings (`dart analyze` clean)
 
-## Next Step (Phase 6 & 7):
-1. Run final static analysis `dart analyze`.
-2. Build release Android APK: `flutter build apk --release`.
-3. Verify output APK binary file size and location.
-4. Prepare final project report and delivery documentation.
+## Completed Milestones
+1. **Phase 0: Repository Analysis & Bug Diagnosis**
+   - Dissected original Orbit codebase, identified SFTP Scoped Storage root cause on Android 10+.
+2. **Phase 1: Application Identity & Foundation**
+   - New branding: **AetherSSH**, package `com.aetherssh.app`.
+   - Custom high-res SVG/PNG icons and Android mipmap icon set.
+   - Fully refactored package imports (`package:aetherssh/...`).
+3. **Phase 2: Core OS Detection & Complete Download Manager**
+   - Implemented real-time OS detection (Linux Mint, Ubuntu, Debian, Fedora, Arch, Windows, macOS).
+   - Crisp SVG/Canvas OS icons in server list and details.
+   - Built resilient Download Manager with speed estimation, progress streams, cancellation, retry, and non-colliding download paths directly to public Android Downloads directory.
+4. **Phase 3: AI-Powered Terminal & NVIDIA NIM Integration**
+   - Default NVIDIA NIM (`meta/llama-3.1-70b-instruct`) and custom OpenAI-compatible endpoints.
+   - Secure Hardware Keystore storage for API credentials.
+   - Strict command-only prompt sanitization (no Markdown explanations, no tutorials).
+   - "AI Commands" button above keyboard toolbar and AppBar.
+   - Dangerous command safeguards (reboot, shutdown, rm -rf, format).
+5. **Phase 4: Active Service Management & Shared Clipboard**
+   - System service inspection (Linux `systemctl`, Windows PowerShell `Get-Service`).
+   - Start, Stop, and Restart with confirmation dialogs and sudo/admin elevation retry.
+   - Shared Clipboard over SSH (Android to remote PC) using native tools (`wl-copy`/`xclip`/`xsel` on Linux, `Set-Clipboard` on Windows) without installing remote agents.
+6. **Phase 5: Enhanced Live Resource Monitor**
+   - Linux 11-part metrics parser and Windows PowerShell WMI/CIM parser.
+   - Real GPU telemetry (NVIDIA SMI/DRM: model, utilization, VRAM, temperature).
+   - Top running processes table (PID, name, CPU%, memory%).
+   - Configurable 1s polling interval.
+7. **Phase 6 & 7: Verification & Production Release APK Build**
+   - Full test suite verified (131/131 passing).
+   - Static analysis passed.
+   - Release APK compiled: `build/app/outputs/flutter-apk/app-release.apk`.
