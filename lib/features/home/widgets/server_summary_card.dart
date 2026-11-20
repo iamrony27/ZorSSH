@@ -9,6 +9,7 @@ import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/widgets/glow_border.dart';
 import 'package:aetherssh/core/providers/server_loading_provider.dart';
 import 'package:aetherssh/core/widgets/os_icon.dart';
+import 'package:aetherssh/core/widgets/pulsing_status_dot.dart';
 
 class ServerSummaryCard extends ConsumerWidget {
   final Server server;
@@ -75,27 +76,34 @@ class ServerSummaryCard extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Text.rich(
-                      TextSpan(
-                        children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text.rich(
                           TextSpan(
-                            text: 'Latency : ',
-                            style: GoogleFonts.inter(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            children: [
+                              TextSpan(
+                                text: 'Latency : ',
+                                style: GoogleFonts.inter(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              TextSpan(
+                                text: latencyText,
+                                style: GoogleFonts.firaCode(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          TextSpan(
-                            text: latencyText,
-                            style: GoogleFonts.firaCode(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 8),
+                        PulsingStatusDot(isOnline: isOnline),
+                      ],
                     ),
                   ],
                 ),

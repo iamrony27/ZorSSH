@@ -220,7 +220,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
         final biometricService = ref.read(biometricServiceProvider);
         final passed = await biometricService.authenticate(
-          reason: 'Authenticate to access AetherSSH',
+          reason: 'Authenticate to access Zor SSH',
         );
 
         if (mounted) {
@@ -295,7 +295,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final languageCode = ref.watch(currentLanguageProvider);
 
     return MaterialApp.router(
-      title: 'AetherSSH',
+      title: 'Zor SSH',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.dark,
       darkTheme: AppTheme.darkTheme,

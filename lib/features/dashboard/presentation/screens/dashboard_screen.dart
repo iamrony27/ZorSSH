@@ -76,7 +76,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               final monitorState = ref.watch(serverMonitorViewModelProvider);
               return monitorState.isLoading
                   ? const Padding(
-                      padding: EdgeInsets.only(right: 16),
+                      padding: EdgeInsets.only(right: 8),
                       child: SizedBox(
                         width: 16,
                         height: 16,
@@ -84,6 +84,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     )
                   : const SizedBox.shrink();
+            },
+          ),
+          // Direct Shared Clipboard Access Button
+          IconButton(
+            icon: const Icon(
+              LucideIcons.clipboardCopy,
+              color: Color(0xFF00B0FF),
+              size: 20,
+            ),
+            tooltip: 'Shared Clipboard',
+            onPressed: () {
+              final server = ref.read(serverStreamProvider(widget.serverId)).value;
+              if (server != null) {
+                ClipboardSyncSheet.show(context, server: server);
+              }
             },
           ),
           IconButton(
@@ -125,9 +140,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: [
                         // 1. Header Info
                         SystemInfoMetricsCard(serverId: widget.serverId),
-                        const SizedBox(
-                          height: 32,
-                        ), // Increased spacing for premium feel
+                        const SizedBox(height: 20),
+                        // 1.5 Material 3 Quick Action Bar (Shared Clipboard, Terminal, Files, Services)
+                        _buildQuickToolsRow(context, ref),
+                        const SizedBox(height: 28),
                         // 2. CPU Chart
                         CpuMetricsCard(serverId: widget.serverId),
                         const SizedBox(height: 32),
@@ -683,6 +699,100 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
     );
   }
+
+  Widget _buildQuickToolsRow(BuildContext context, WidgetRef ref) {
+    final server = ref.watch(serverStreamProvider(widget.serverId)).value;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF131722),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildQuickActionBtn(
+            icon: LucideIcons.clipboardCopy,
+            label: 'Clipboard',
+            color: const Color(0xFF00B0FF),
+            onTap: () {
+              if (server != null) {
+                ClipboardSyncSheet.show(context, server: server);
+              }
+            },
+          ),
+          _buildQuickActionBtn(
+            icon: LucideIcons.terminal,
+            label: 'Terminal',
+            color: const Color(0xFF00E676),
+            onTap: () => context.go('/terminal'),
+          ),
+          _buildQuickActionBtn(
+            icon: LucideIcons.folderClosed,
+            label: 'Files',
+            color: const Color(0xFF40C4FF),
+            onTap: () => context.go('/files'),
+          ),
+          _buildQuickActionBtn(
+            icon: LucideIcons.activity,
+            label: 'Services',
+            color: const Color(0xFFB388FF),
+            onTap: () {
+              if (server != null) {
+                context.push('/services', extra: server);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ── Connection State Banner ────────────────────────────────────────────────────
@@ -932,12 +1042,8 @@ class _CpuMetricsCardState extends ConsumerState<CpuMetricsCard> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.zinc900.withValues(alpha: 0.8),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: AppTheme.border.withValues(alpha: 0.5),
-                            width: 0.8,
-                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1029,12 +1135,8 @@ class _CpuMetricsCardState extends ConsumerState<CpuMetricsCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: AppTheme.zinc900.withValues(alpha: 0.6),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppTheme.border.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
       ),
       child: RichText(
         text: TextSpan(
@@ -1208,12 +1310,8 @@ class _MemoryMetricsCardState extends ConsumerState<MemoryMetricsCard> {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.zinc900.withValues(alpha: 0.8),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: AppTheme.border.withValues(alpha: 0.5),
-                            width: 0.8,
-                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1307,12 +1405,8 @@ class _MemoryMetricsCardState extends ConsumerState<MemoryMetricsCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: AppTheme.zinc900.withValues(alpha: 0.6),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppTheme.border.withValues(alpha: 0.3),
-          width: 0.5,
-        ),
       ),
       child: RichText(
         text: TextSpan(

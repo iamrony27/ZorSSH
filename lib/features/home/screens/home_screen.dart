@@ -99,7 +99,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             Text(
-              'AETHER',
+              'ZOR SSH',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.5,

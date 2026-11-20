@@ -98,7 +98,7 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
                 Text(
                   _isConfirming
                       ? 'Re-enter your PIN to confirm'
-                      : 'Used to unlock AetherSSH securely',
+                      : 'Used to unlock Zor SSH securely',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     color: AppTheme.textSecondary,

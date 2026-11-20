@@ -67,8 +67,8 @@ class BiometricsTile extends ConsumerWidget {
 
     if (available) {
       final reason = newValue
-          ? 'Authenticate to enable biometric lock for AetherSSH'
-          : 'Authenticate to disable biometric lock for AetherSSH';
+          ? 'Authenticate to enable biometric lock for Zor SSH'
+          : 'Authenticate to disable biometric lock for Zor SSH';
       authenticated = await biometricService.authenticate(reason: reason);
     }
 

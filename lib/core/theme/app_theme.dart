@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:aetherssh/core/theme/app_sizes.dart';
 
 class AppTheme {
-  // Beszel Palette (Zinc & Emerald)
-  static const Color background = Color(0xFF0A0A0C); // Pitch Black
-  static const Color surface = Color(0xFF141518); // Inactive secondary card
-  static const Color border = Color(0xFF27272A); // Zinc 800
+  // Material 3 Dark Palette (Obsidian & Emerald)
+  static const Color background = Color(0xFF090B10); // Modern M3 Deep Obsidian
+  static const Color surface = Color(0xFF131722); // M3 Single-Color Surface Container
+  static const Color border = Color(0xFF1E2330); // Subtle M3 Outline Variant
   static const Color primary = Color(0xFF10B981); // Emerald 500
   static const Color textPrimary = Color(0xFFFFFFFF); // Pure White
   static const Color textSecondary = Color(0xFFA1A1AA); // Zinc 400
@@ -15,13 +15,11 @@ class AppTheme {
   static const Color zinc900 = Color(0xFF18181B);
   static const Color zinc950 = Color(0xFF09090B);
 
-  // Minimal Surface Colors
-  static const Color cardBackground = Color(
-    0xFF141518,
-  ); // Inactive secondary card
+  // Material 3 Single-Color Card Surfaces (No Border)
+  static const Color cardBackground = Color(0xFF131722); // M3 Solid Surface Container
   static const Color formInputBackground = Color(
-    0xFF15181E,
-  ); // Recessed dark input
+    0xFF181D2A,
+  ); // Recessed M3 dark input
 
   static LinearGradient chartGradient(Color baseColor) => LinearGradient(
     begin: Alignment.topCenter,

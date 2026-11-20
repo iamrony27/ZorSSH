@@ -29,7 +29,7 @@ class BiometricService {
       return await _auth.authenticate(
         localizedReason: reason,
         biometricOnly:
-            true, // Never fall back to OS passcode; use AetherSSH's PIN screen instead
+            true, // Never fall back to OS passcode; use Zor SSH's PIN screen instead
         persistAcrossBackgrounding:
             false, // Dismiss prompt if app is backgrounded
       );

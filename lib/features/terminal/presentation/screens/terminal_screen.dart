@@ -701,15 +701,32 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
           onDisconnect: () => ref.read(terminalProvider.notifier).disconnect(),
         ),
         Expanded(
-          child: TerminalView(
-            state.terminal,
-            controller: _terminalController,
-            autofocus: true,
-            textStyle: TerminalStyle(
-              fontFamily: GoogleFonts.firaCode().fontFamily!,
-              fontSize: 13,
-            ),
-            theme: _getTerminalTheme(),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // High-Tech Zor Watermark in Terminal Background
+              IgnorePointer(
+                child: Opacity(
+                  opacity: 0.08,
+                  child: Image.asset(
+                    'assets/images/zor-logo.png',
+                    width: 230,
+                    height: 230,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              TerminalView(
+                state.terminal,
+                controller: _terminalController,
+                autofocus: true,
+                textStyle: TerminalStyle(
+                  fontFamily: GoogleFonts.firaCode().fontFamily!,
+                  fontSize: 13,
+                ),
+                theme: _getTerminalTheme(),
+              ),
+            ],
           ),
         ),
         _QuickKeysBar(
@@ -745,7 +762,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
       cursor: AppTheme.primary,
       selection: AppTheme.primary.withValues(alpha: 0.3),
       foreground: AppTheme.textPrimary,
-      background: AppTheme.background,
+      background: Colors.transparent,
       black: Colors.black,
       red: AppTheme.critical,
       green: AppTheme.success,

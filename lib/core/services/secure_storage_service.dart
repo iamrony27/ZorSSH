@@ -304,6 +304,16 @@ class SecureStorageService {
   static const _kAiApiKey = 'ai_api_key';
   static const _kAiModel = 'ai_model';
   static const _kAiEndpoint = 'ai_endpoint';
+  static const _kAiUseCustom = 'ai_use_custom';
+
+  Future<bool> readAiUseCustom() async {
+    final val = await _read(_kAiUseCustom);
+    return val == 'true';
+  }
+
+  Future<void> saveAiUseCustom(bool useCustom) async {
+    await _storage.write(key: _kAiUseCustom, value: useCustom ? 'true' : 'false');
+  }
 
   Future<void> saveAiConfig({
     required String provider,
@@ -315,20 +325,29 @@ class SecureStorageService {
     await _storage.write(key: _kAiApiKey, value: apiKey.trim());
     await _storage.write(key: _kAiModel, value: model.trim());
     await _storage.write(key: _kAiEndpoint, value: endpoint.trim());
+    await _storage.write(key: _kAiUseCustom, value: 'true');
   }
 
   Future<Map<String, String?>> readAiConfig() async {
-    final provider = await _read(_kAiProvider) ?? 'nvidia';
-    var apiKey = await _read(_kAiApiKey);
-    final model = await _read(_kAiModel) ?? 'nvidia/nemotron-3.5-lightning-30b-a3b';
-    final endpoint = await _read(_kAiEndpoint) ?? 'https://integrate.api.nvidia.com/v1';
-
-    // Default to the embedded application API key for NVIDIA NIM if none has been saved
-    if ((apiKey == null || apiKey.trim().isEmpty) && provider == 'nvidia') {
-      apiKey = 'nvapi-placeholder';
+    final useCustom = await readAiUseCustom();
+    if (!useCustom) {
+      return {
+        'isCustom': 'false',
+        'provider': 'nvidia',
+        'apiKey':
+            'nvapi-placeholder',
+        'model': 'nvidia/nemotron-3.5-lightning-30b-a3b',
+        'endpoint': 'https://integrate.api.nvidia.com/v1',
+      };
     }
 
+    final provider = await _read(_kAiProvider) ?? 'custom';
+    var apiKey = await _read(_kAiApiKey);
+    final model = await _read(_kAiModel) ?? 'gpt-4o-mini';
+    final endpoint = await _read(_kAiEndpoint) ?? 'https://api.openai.com/v1';
+
     return {
+      'isCustom': 'true',
       'provider': provider,
       'apiKey': apiKey,
       'model': model,
@@ -341,6 +360,7 @@ class SecureStorageService {
     await _storage.delete(key: _kAiApiKey);
     await _storage.delete(key: _kAiModel);
     await _storage.delete(key: _kAiEndpoint);
+    await _storage.delete(key: _kAiUseCustom);
   }
 
   // ── Hive Encryption Key ───────────────────────────────────────────────────

@@ -1,31 +1,34 @@
-# Privacy Policy for Orbit
+# Privacy Policy for Zor SSH
 
-**Last updated: October 2026**
+**Last updated: November 2026**
 
-Yadu Krishnan H ("Developer") built the Orbit app as a Source-Available application. This SERVICE is provided at no cost and is intended for use as is.
+Zor SSH ("the App") is developed as a privacy-first, secure mobile server administration and SSH management application. This service is provided to enable developers and system administrators to securely manage remote infrastructure directly from their mobile devices.
 
-### 1. Information Collection and Use
+### 1. Information Collection and Storage
 
-Orbit is designed with a strict offline-first, privacy-centric architecture. **The application does not collect, store, transmit, analytics-track, or share any personal information or usage data with the Developer or any third parties.** All sensitive data handled by the application—including but not limited to:
+Zor SSH is engineered with an uncompromising offline-first, zero-telemetry architecture. **The application does not collect, store, transmit, analytics-track, or share any personal information, telemetry, or server usage data with the Developer or any third parties.**
 
-- Server IP addresses and hostnames
-- SSH usernames, passwords, and passphrases
-- Cryptographic keys (e.g., RSA, Ed25519)
-- Biometric authentication states
+All sensitive data handled by the application—including:
+- Server hostnames and IP addresses
+- SSH usernames, passwords, and private key passphrases
+- Cryptographic private keys (RSA, Ed25519, ECDSA)
+- Master PIN hashes and biometric unlock tokens
 
-...are encrypted and stored strictly locally on your physical device using secure database technologies. Orbit establishes direct, peer-to-peer network connections to your configured servers and does not route your traffic through any centralized, developer-owned, or proxy servers.
+...are encrypted using hardware-backed keystores (AES-256-GCM / PBKDF2) and stored strictly locally on your physical device. Zor SSH establishes direct, peer-to-peer SSH/SFTP network connections exclusively to your configured servers without routing through any intermediate, proxy, or relay servers.
 
-If you choose to enable the optional Server Geolocation feature in Settings, the app queries the public `ipwho.is` service over HTTPS to look up the approximate country and city for your server's IP address. No credentials, tokens, or personal identifiers are ever transmitted.
+### 2. Optional Features & Third-Party APIs
 
-### 2. Biometric Data
+- **AI Terminal Assistance:** If you utilize the integrated AI command generation feature, only your non-sensitive command intent and target OS name are sent to the AI engine to synthesize shell commands. Server passwords, private keys, and terminal contents are never transmitted.
+- **Server Geolocation:** If you choose to enable optional Server Geolocation in Settings, the app queries the public `ipwho.is` service over encrypted HTTPS to retrieve approximate server country/city coordinates. No credentials, server keys, or identifiers are transmitted.
 
-Orbit requests access to your device's biometric hardware (Fingerprint/Face Unlock) strictly to secure local access to the application interface and your saved credentials. This biometric data is processed entirely by your device's native operating system (Android/iOS). Orbit does not collect, read, or transmit your actual biometric data.
+### 3. Biometric Security
 
-### 3. Changes to This Privacy Policy
+Zor SSH requests access to your device's biometric authentication hardware (Fingerprint, Face Unlock) strictly to authorize local unlocking of the application and your stored credentials. Biometric verification is handled entirely by your device's operating system security enclave (Android BiometricPrompt). Zor SSH never reads, records, or exports your biometric biometric data.
 
-The Developer may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes. Changes are effective immediately after they are posted on this page.
+### 4. Changes to This Privacy Policy
 
-### 4. Contact Us
+The Privacy Policy may be updated periodically to reflect application enhancements or security updates. Review this page periodically for updates.
 
-If you have any questions or suggestions about this Privacy Policy, please contact:
-yadukrishnanh.connect@gmail.com
+### 5. Contact & Support
+
+For questions, feedback, or support regarding Zor SSH, please reach out through the official application repository or developer contact channels.

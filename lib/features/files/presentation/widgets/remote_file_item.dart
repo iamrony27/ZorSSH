@@ -4,7 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/features/files/data/remote_file.dart';
 
-/// Enhanced file item widget with modern UI design
+/// Next-gen floating file/folder card item widget
 class RemoteFileItem extends StatelessWidget {
   final RemoteFile file;
   final VoidCallback onTap;
@@ -39,150 +39,213 @@ class RemoteFileItem extends StatelessWidget {
     return IgnorePointer(
       ignoring: isNavigationDisabled,
       child: AnimatedOpacity(
-        opacity: isNavigationDisabled ? 0.5 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: isInMultiSelectMode ? onToggleSelect : onTap,
-            onLongPress: isNavigationDisabled ? null : onLongPress,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.primary.withValues(alpha: 0.1)
-                    : Colors.transparent,
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    width: 1,
-                  ),
-                ),
+        opacity: isNavigationDisabled ? 0.45 : 1.0,
+        duration: const Duration(milliseconds: 180),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3.5),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF132034)
+                : const Color(0xFF10131B),
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF00E676)
+                  : Colors.white.withValues(alpha: 0.06),
+              width: isSelected ? 1.4 : 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isSelected ? 0.4 : 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              child: Row(
-                children: [
-                  // Selection checkbox in multi-select mode
-                  if (isInMultiSelectMode) ...[
-                    Transform.scale(
-                      scale: 0.9,
-                      child: Checkbox(
-                        value: isSelected,
-                        onChanged: (_) => onToggleSelect?.call(),
-                        activeColor: AppTheme.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(13),
+            child: InkWell(
+              onTap: isInMultiSelectMode ? onToggleSelect : onTap,
+              onLongPress: isNavigationDisabled ? null : onLongPress,
+              borderRadius: BorderRadius.circular(13),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    // Selection checkbox in multi-select mode
+                    if (isInMultiSelectMode) ...[
+                      Transform.scale(
+                        scale: 0.9,
+                        child: Checkbox(
+                          value: isSelected,
+                          onChanged: (_) => onToggleSelect?.call(),
+                          activeColor: const Color(0xFF00E676),
+                          checkColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  // File/Folder Icon with thumbnail
-                  _buildFileIcon(),
-                  const SizedBox(width: 12),
-                  // File Info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // File Name with hidden indicator
-                        Row(
-                          children: [
-                            if (file.isHidden) ...[
-                              Icon(
-                                LucideIcons.eyeOff,
-                                size: 12,
-                                color: AppTheme.textSecondary.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                            ],
-                            if (file.isLink) ...[
-                              Icon(
-                                LucideIcons.link,
-                                size: 12,
-                                color: AppTheme.warning,
-                              ),
-                              const SizedBox(width: 4),
-                            ],
-                            Expanded(
-                              child: Text(
-                                file.name,
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        // Metadata row
-                        Row(
-                          children: [
-                            // Permissions badge
-                            if (file.permissions.isNotEmpty &&
-                                !file.isDirectory) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.zinc800,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: Text(
-                                  file.permissions,
-                                  style: GoogleFonts.firaCode(
-                                    fontSize: 9,
-                                    color: AppTheme.textSecondary,
+                      const SizedBox(width: 4),
+                    ],
+
+                    // Squircle Icon Badge
+                    _buildIconBadge(size: 42),
+                    const SizedBox(width: 14),
+
+                    // File Information
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // File / Folder Name Row
+                          Row(
+                            children: [
+                              if (file.isHidden) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        LucideIcons.eyeOff,
+                                        size: 10,
+                                        color: Colors.white60,
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              ],
+                              if (file.isLink) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1.5,
+                                  ),
+                                  margin: const EdgeInsets.only(right: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.warning.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.link,
+                                    size: 10,
+                                    color: AppTheme.warning,
+                                  ),
+                                ),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  file.name,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14.5,
+                                    fontWeight: file.isDirectory
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: Colors.white,
+                                    letterSpacing: -0.1,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                              const SizedBox(width: 6),
                             ],
-                            // Size
-                            Text(
-                              file.formattedSize,
-                              style: const TextStyle(
-                                color: Color(0xFF8E8E93),
-                                fontSize: 12,
+                          ),
+                          const SizedBox(height: 5),
+
+                          // Metadata Row (Size, Permissions, Date)
+                          Row(
+                            children: [
+                              // Size Tag
+                              Text(
+                                file.formattedSize,
+                                style: GoogleFonts.firaCode(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: file.isDirectory
+                                      ? const Color(0xFF00E676).withValues(alpha: 0.85)
+                                      : const Color(0xFF94A3B8),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Modified time
-                            const Text(
-                              '•',
-                              style: TextStyle(
-                                color: Color(0xFF8E8E93),
-                                fontSize: 12,
+
+                              const SizedBox(width: 8),
+                              Text(
+                                '•',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  fontSize: 12,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              file.formattedModified,
-                              style: const TextStyle(
-                                color: Color(0xFF8E8E93),
-                                fontSize: 12,
+                              const SizedBox(width: 8),
+
+                              // Modified time
+                              Text(
+                                file.formattedModified,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF64748B),
+                                ),
                               ),
-                            ),
-                          ],
+
+                              // Permissions chip
+                              if (file.permissions.isNotEmpty && !file.isDirectory) ...[
+                                const Spacer(),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 1.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF181F2C),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.06),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    file.permissions,
+                                    style: GoogleFonts.firaCode(
+                                      fontSize: 9.5,
+                                      color: const Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Directory Chevron
+                    if (file.isDirectory && !isInMultiSelectMode) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                      ],
-                    ),
-                  ),
-                  // Navigation chevron for directories
-                  if (file.isDirectory && !isInMultiSelectMode)
-                    Icon(
-                      LucideIcons.chevronRight,
-                      size: 18,
-                      color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                    ),
-                ],
+                        child: const Icon(
+                          LucideIcons.chevronRight,
+                          size: 14,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -195,83 +258,103 @@ class RemoteFileItem extends StatelessWidget {
     return IgnorePointer(
       ignoring: isNavigationDisabled,
       child: AnimatedOpacity(
-        opacity: isNavigationDisabled ? 0.5 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            onTap: isInMultiSelectMode ? onToggleSelect : onTap,
-            onLongPress: isNavigationDisabled ? null : onLongPress,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.terminalMint.withValues(alpha: 0.15)
-                    : AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? AppTheme.terminalMint
-                      : Colors.white.withValues(alpha: 0.07),
-                  width: isSelected ? 1.5 : 0.5,
-                ),
+        opacity: isNavigationDisabled ? 0.45 : 1.0,
+        duration: const Duration(milliseconds: 180),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF132034)
+                : const Color(0xFF10131B),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF00E676)
+                  : Colors.white.withValues(alpha: 0.07),
+              width: isSelected ? 1.4 : 0.8,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            child: InkWell(
+              onTap: isInMultiSelectMode ? onToggleSelect : onTap,
+              onLongPress: isNavigationDisabled ? null : onLongPress,
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
                 children: [
-                  // Selection overlay in multi-select mode
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildIconBadge(size: 48),
+                        const SizedBox(height: 10),
+                        Text(
+                          file.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: file.isDirectory
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          file.formattedSize,
+                          style: GoogleFonts.firaCode(
+                            fontSize: 10.5,
+                            color: file.isDirectory
+                                ? const Color(0xFF00E676)
+                                : const Color(0xFF94A3B8),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Selection checkbox for grid
                   if (isInMultiSelectMode)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
+                        width: 22,
+                        height: 22,
                         decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: Icon(
-                          isSelected
-                              ? LucideIcons.checkCircle2
-                              : LucideIcons.circle,
-                          size: 20,
                           color: isSelected
-                              ? AppTheme.primary
-                              : AppTheme.textSecondary,
+                              ? const Color(0xFF00E676)
+                              : Colors.black54,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF00E676)
+                                : Colors.white30,
+                            width: 1.5,
+                          ),
                         ),
+                        child: isSelected
+                            ? const Icon(
+                                LucideIcons.check,
+                                size: 14,
+                                color: Colors.black,
+                              )
+                            : null,
                       ),
                     ),
-                  // File Icon (large)
-                  Center(child: _buildFileIcon(size: 48)),
-                  const SizedBox(height: 12),
-                  // File Name
-                  Expanded(
-                    child: Text(
-                      file.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Size
-                  Text(
-                    file.formattedSize,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF8E8E93),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
                 ],
               ),
             ),
@@ -281,45 +364,79 @@ class RemoteFileItem extends StatelessWidget {
     );
   }
 
-  Widget _buildFileIcon({double size = 24}) {
+  /// Squircle dual-tone badge with vibrant glowing color according to file type
+  Widget _buildIconBadge({required double size}) {
     IconData icon;
-    Color iconColor;
+    Color primaryColor;
+    Color bgTint;
 
     if (file.isDirectory) {
       icon = LucideIcons.folder;
-      iconColor = AppTheme.terminalMint;
+      primaryColor = const Color(0xFF00E676); // Emerald
+      bgTint = const Color(0xFF00E676).withValues(alpha: 0.12);
     } else {
-      iconColor = AppTheme.textSecondary;
       switch (file.fileType) {
         case 'image':
           icon = LucideIcons.image;
+          primaryColor = const Color(0xFFE040FB); // Magenta
+          bgTint = const Color(0xFFE040FB).withValues(alpha: 0.12);
           break;
         case 'video':
           icon = LucideIcons.video;
+          primaryColor = const Color(0xFFFF5252); // Red/Coral
+          bgTint = const Color(0xFFFF5252).withValues(alpha: 0.12);
           break;
         case 'audio':
           icon = LucideIcons.music;
+          primaryColor = const Color(0xFFFF4081); // Pink
+          bgTint = const Color(0xFFFF4081).withValues(alpha: 0.12);
+          break;
+        case 'code':
+          icon = LucideIcons.code2;
+          primaryColor = const Color(0xFF00B0FF); // Electric Cyan
+          bgTint = const Color(0xFF00B0FF).withValues(alpha: 0.12);
+          break;
+        case 'archive':
+          icon = LucideIcons.archive;
+          primaryColor = const Color(0xFFFF9100); // Amber
+          bgTint = const Color(0xFFFF9100).withValues(alpha: 0.12);
+          break;
+        case 'config':
+          icon = LucideIcons.settings2;
+          primaryColor = const Color(0xFF7C4DFF); // Deep Purple
+          bgTint = const Color(0xFF7C4DFF).withValues(alpha: 0.12);
           break;
         case 'document':
           icon = LucideIcons.fileText;
-          break;
-        case 'code':
-          icon = LucideIcons.fileCode;
-          iconColor = const Color(0xFF64D2FF);
-          break;
-        case 'archive':
-          icon = LucideIcons.fileArchive;
-          iconColor = const Color(0xFFFF9F0A);
-          break;
-        case 'config':
-          icon = LucideIcons.settings;
+          primaryColor = const Color(0xFF40C4FF); // Sky Blue
+          bgTint = const Color(0xFF40C4FF).withValues(alpha: 0.12);
           break;
         default:
           icon = LucideIcons.file;
+          primaryColor = const Color(0xFF94A3B8); // Slate
+          bgTint = Colors.white.withValues(alpha: 0.05);
       }
     }
 
-    return Icon(icon, size: size, color: iconColor);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: bgTint,
+        borderRadius: BorderRadius.circular(size * 0.28),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.25),
+          width: 0.8,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: size * 0.48,
+          color: primaryColor,
+        ),
+      ),
+    );
   }
 }
 

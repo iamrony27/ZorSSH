@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:aetherssh/features/connect/presentation/screens/add_server_screen.dart';
 import 'package:aetherssh/features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -57,33 +58,25 @@ final router = GoRouter(
                   padding: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          color: Colors.black.withValues(alpha: 0.45),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(28),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                         child: Container(
-                          height: 64,
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          height: 66,
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFF0A0A0C,
-                            ).withValues(alpha: 0.75),
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.12),
-                                width: 0.5,
-                              ),
-                            ),
-                            borderRadius: BorderRadius.circular(24),
+                            color: const Color(0xFF131722).withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(28),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -91,7 +84,7 @@ final router = GoRouter(
                               _buildNavItem(
                                 context,
                                 0,
-                                LucideIcons.home,
+                                LucideIcons.layoutDashboard,
                                 'Dashboard',
                                 _calculateSelectedIndex(context),
                               ),
@@ -105,7 +98,7 @@ final router = GoRouter(
                               _buildNavItem(
                                 context,
                                 2,
-                                LucideIcons.folder,
+                                LucideIcons.folderClosed,
                                 'Files',
                                 _calculateSelectedIndex(context),
                               ),
@@ -275,25 +268,41 @@ Widget _buildNavItem(
   int selectedIndex,
 ) {
   final isSelected = selectedIndex == index;
-  final color = isSelected ? const Color(0xFF00E676) : const Color(0xFFA1A1AA);
+  final activeColor = const Color(0xFF00E676);
+  final inactiveColor = const Color(0xFF8E95A5);
 
   return Expanded(
     child: InkWell(
       onTap: () => _onItemTapped(index, context),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? activeColor.withValues(alpha: 0.16)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? activeColor : inactiveColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
+            style: GoogleFonts.inter(
+              color: isSelected ? activeColor : inactiveColor,
+              fontSize: 10.5,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),

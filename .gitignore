@@ -44,3 +44,6 @@ coverage/
 
 # Original reference folder
 orbit_original/
+
+# APK artifacts
+*.apk

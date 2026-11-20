@@ -168,7 +168,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.text('Create Master PIN'), findsOneWidget);
-        expect(find.text('Used to unlock Orbit securely'), findsOneWidget);
+        expect(find.text('Used to unlock Zor SSH securely'), findsOneWidget);
         expect(find.text('Secure Storage Error'), findsNothing);
       },
     );

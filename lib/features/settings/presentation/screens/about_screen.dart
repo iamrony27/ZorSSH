@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/widgets/system_card.dart';
+import 'package:aetherssh/features/settings/presentation/widgets/upi_donation_sheet.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AboutScreen extends StatefulWidget {
@@ -94,14 +96,14 @@ class _AboutScreenState extends State<AboutScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Image.asset(
-                        'assets/images/aether-logo.png',
+                        'assets/images/zor-logo.png',
                         fit: BoxFit.cover,
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSizes.p24),
                   Text(
-                    'AetherSSH',
+                    'Zor SSH',
                     style: GoogleFonts.inter(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -128,13 +130,38 @@ class _AboutScreenState extends State<AboutScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: AppSizes.p48),
+            const SizedBox(height: AppSizes.p32),
+
+            // Help Developer Card (Donations & Support)
+            SystemCard(
+              padding: EdgeInsets.zero,
+              color: const Color(0xFF131822),
+              child: _buildListTile(
+                title: 'Help Developer',
+                subtitle: 'Support Zor SSH development via UPI',
+                icon: LucideIcons.heartHandshake,
+                iconColor: const Color(0xFF00E676),
+                onTap: () => UpiDonationSheet.show(context),
+              ),
+            ),
+            const SizedBox(height: AppSizes.p24),
 
             // Links List
             SystemCard(
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
+                  _buildListTile(
+                    title: 'GitHub Repository',
+                    subtitle: 'github.com/iamrony27/ZorSSH',
+                    icon: LucideIcons.gitBranch,
+                    iconColor: const Color(0xFF00B0FF),
+                    onTap: () async {
+                      final url = Uri.parse('https://github.com/iamrony27/ZorSSH');
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    },
+                  ),
+                  _divider(),
                   _buildListTile(
                     title: 'Privacy Policy',
                     icon: LucideIcons.shield,
@@ -183,6 +210,7 @@ class _AboutScreenState extends State<AboutScreen> {
     required String title,
     String? subtitle,
     required IconData icon,
+    Color? iconColor,
     VoidCallback? onTap,
   }) {
     return ListTile(
@@ -194,10 +222,10 @@ class _AboutScreenState extends State<AboutScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: (iconColor ?? Colors.white).withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: Colors.white, size: 18),
+        child: Icon(icon, color: iconColor ?? Colors.white, size: 18),
       ),
       title: Text(
         title,

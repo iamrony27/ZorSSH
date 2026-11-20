@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -105,6 +106,8 @@ class AddServerScreenState extends ConsumerState<AddServerScreen> {
     required IconData prefixIcon,
     String? hintText,
     Widget? suffixIcon,
+    BoxConstraints? prefixIconConstraints,
+    EdgeInsetsGeometry? contentPadding,
   }) {
     return InputDecoration(
       labelText: labelText,
@@ -112,6 +115,7 @@ class AddServerScreenState extends ConsumerState<AddServerScreen> {
       labelStyle: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
       hintStyle: const TextStyle(color: AppTheme.disabled, fontSize: 13),
       prefixIcon: Icon(prefixIcon, size: 18, color: AppTheme.textSecondary),
+      prefixIconConstraints: prefixIconConstraints,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFF15181E),
@@ -141,7 +145,8 @@ class AddServerScreenState extends ConsumerState<AddServerScreen> {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: AppTheme.critical, width: 1.5),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: contentPadding ??
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
@@ -211,7 +216,6 @@ class AddServerScreenState extends ConsumerState<AddServerScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            flex: 3,
                             child: TextFormField(
                               controller: _hostnameController,
                               style: const TextStyle(
@@ -232,21 +236,40 @@ class AddServerScreenState extends ConsumerState<AddServerScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(
+                          SizedBox(
+                            width: 114,
                             child: TextFormField(
                               controller: _portController,
-                              style: const TextStyle(
+                              style: GoogleFonts.firaCode(
                                 color: AppTheme.textPrimary,
                                 fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                               keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(5),
+                              ],
                               decoration: _buildInputDecoration(
                                 labelText: 'Port',
                                 prefixIcon: LucideIcons.hash,
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 32,
+                                  minHeight: 24,
+                                ),
+                                contentPadding: const EdgeInsets.only(
+                                  left: 2,
+                                  right: 12,
+                                  top: 14,
+                                  bottom: 14,
+                                ),
                               ),
                               validator: (value) {
-                                if (value == null ||
-                                    int.tryParse(value) == null) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Required';
+                                }
+                                final p = int.tryParse(value.trim());
+                                if (p == null || p < 1 || p > 65535) {
                                   return 'Invalid';
                                 }
                                 return null;

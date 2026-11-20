@@ -157,5 +157,37 @@ void main() {
         expect(passphraseEditable.obscureText, isFalse);
       },
     );
+
+    testWidgets(
+      'Port field renders default 22, has dedicated width >= 110px, and supports multi-digit ports',
+      (tester) async {
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(home: AddServerScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final portFinder = find.widgetWithText(TextFormField, 'Port');
+        expect(portFinder, findsOneWidget);
+
+        // Verify the Port field container width is at least 110px
+        final portSize = tester.getSize(portFinder);
+        expect(portSize.width, greaterThanOrEqualTo(110.0));
+
+        // Verify default value is '22'
+        expect(find.text('22'), findsOneWidget);
+
+        // Enter a multi-digit port like 8080
+        await tester.enterText(portFinder, '8080');
+        await tester.pumpAndSettle();
+        expect(find.text('8080'), findsOneWidget);
+
+        // Enter a 5-digit port like 65535
+        await tester.enterText(portFinder, '65535');
+        await tester.pumpAndSettle();
+        expect(find.text('65535'), findsOneWidget);
+      },
+    );
   });
 }

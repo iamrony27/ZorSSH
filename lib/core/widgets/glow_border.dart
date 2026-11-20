@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
 
 class GlowBorder extends StatelessWidget {
   final Widget child;
@@ -20,42 +19,23 @@ class GlowBorder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveRadius = borderRadius ?? AppSizes.radiusMedium;
-    final effectiveColor = color ?? AppTheme.primary;
+    final effectiveRadius = borderRadius ?? 20.0;
+    final effectiveColor = color ?? AppTheme.cardBackground;
 
     return Container(
       decoration: BoxDecoration(
+        color: effectiveColor,
         borderRadius: BorderRadius.circular(effectiveRadius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            effectiveColor.withValues(alpha: 0.5),
-            effectiveColor.withValues(alpha: 0.05),
-            effectiveColor.withValues(alpha: 0.02),
-            effectiveColor.withValues(alpha: 0.2),
-          ],
-          stops: const [0.0, 0.4, 0.6, 1.0],
-        ),
-        boxShadow: showGlow
-            ? [
-                BoxShadow(
-                  color: effectiveColor.withValues(alpha: 0.05),
-                  blurRadius: 12,
-                  spreadRadius: -2,
-                ),
-              ]
-            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.22),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-      padding: EdgeInsets.all(borderWidth),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(effectiveRadius - borderWidth),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: child,
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
     );
   }
 }
