@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
+import 'package:aetherssh/features/dashboard/models/process_info.dart';
 
 /// CPU ticks data structure for delta calculation
 class CpuTicks {
@@ -66,7 +68,7 @@ class CpuTicks {
 
 class LinuxParser {
   static const String linuxMetricsCommand =
-      'cat /proc/stat; echo "|||"; free -b; echo "|||"; df -k /; echo "|||"; cat /proc/uptime; echo "|||"; hostname; echo "|||"; hostname -I | awk \'{print \$1}\'; echo "|||"; grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d \'"\'; echo "|||"; uname -r; echo "|||"; (lscpu 2>/dev/null | grep -E "Model name|CPU\\(s\\)|CPU max MHz" || cat /proc/cpuinfo | grep -E "model name|cpu MHz" | head -n 5); exit';
+      'cat /proc/stat; echo "|||"; free -b; echo "|||"; df -k /; echo "|||"; cat /proc/uptime; echo "|||"; hostname; echo "|||"; hostname -I | awk \'{print \$1}\'; echo "|||"; grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d \'"\'; echo "|||"; uname -r; echo "|||"; (lscpu 2>/dev/null | grep -E "Model name|CPU\\(s\\)|CPU max MHz" || cat /proc/cpuinfo | grep -E "model name|cpu MHz" | head -n 5); echo "|||"; (nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null || echo "NO_GPU"); echo "|||"; (ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -n 7 | tail -n +2 || ps -eo pid,comm,%cpu,%mem | head -n 7 | tail -n +2); exit';
 
   static final RegExp _whiteSpace = RegExp(r'\s+');
   static final RegExp _diskPercentageRegex = RegExp(r'\s+(\d+)%');
@@ -350,6 +352,21 @@ class LinuxParser {
         ? parseCpuHardware(parts[8])
         : {'model': '', 'cores': 0, 'speed': ''};
 
+    // 10. GPU Stats (Part 9)
+    final gpuStats = parts.length > 9
+        ? GpuStats.parseNvidiaSmi(parts[9])
+        : GpuStats.none;
+
+    // 11. Top Processes (Part 10)
+    final List<ProcessItem> topProcesses = [];
+    if (parts.length > 10) {
+      final procLines = parts[10].trim().split('\n');
+      for (final line in procLines) {
+        final p = ProcessItem.parsePsLine(line);
+        if (p != null) topProcesses.add(p);
+      }
+    }
+
     return {
       'cpuPct': cpuPct,
       'ramPct': ramPct,
@@ -371,6 +388,8 @@ class LinuxParser {
       'load1': 0.0,
       'load5': 0.0,
       'load15': 0.0,
+      'gpuStats': gpuStats,
+      'topProcesses': topProcesses,
     };
   }
 

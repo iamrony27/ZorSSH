@@ -24,6 +24,9 @@ import 'package:aetherssh/features/dashboard/widgets/system_info_card.dart';
 
 import 'package:aetherssh/features/dashboard/presentation/widgets/base_metric_card.dart';
 import 'package:aetherssh/features/dashboard/widgets/disk_usage_gauge.dart';
+import 'package:aetherssh/features/dashboard/widgets/gpu_metric_card.dart';
+import 'package:aetherssh/features/dashboard/widgets/top_processes_card.dart';
+import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
 import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -133,6 +136,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(height: 32),
                         // 4. Disk Usage
                         DiskMetricsCard(serverId: widget.serverId),
+                        const SizedBox(height: 32),
+                        // 5. GPU Telemetry
+                        GpuMetricsSection(serverId: widget.serverId),
+                        const SizedBox(height: 32),
+                        // 6. Running Processes
+                        ProcessesMetricsSection(serverId: widget.serverId),
                         SizedBox(
                           height: MediaQuery.of(context).padding.bottom + 16,
                         ), // Bottom clearance for floating navbar
@@ -1403,5 +1412,33 @@ class DiskMetricsCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class GpuMetricsSection extends ConsumerWidget {
+  final String serverId;
+  const GpuMetricsSection({super.key, required this.serverId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(serverHistoryProvider(serverId));
+    final latestStats = history.isNotEmpty ? history.last : null;
+    final gpuStats = latestStats?.gpuStats ?? GpuStats.none;
+
+    return GpuMetricCard(gpuStats: gpuStats);
+  }
+}
+
+class ProcessesMetricsSection extends ConsumerWidget {
+  final String serverId;
+  const ProcessesMetricsSection({super.key, required this.serverId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(serverHistoryProvider(serverId));
+    final latestStats = history.isNotEmpty ? history.last : null;
+    final procs = latestStats?.topProcesses ?? const [];
+
+    return TopProcessesCard(processes: procs);
   }
 }

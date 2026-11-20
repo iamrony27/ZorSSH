@@ -8,6 +8,9 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aetherssh/core/models/server.dart';
 import 'package:aetherssh/core/utils/linux_parser.dart';
+import 'package:aetherssh/core/utils/windows_parser.dart';
+import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
+import 'package:aetherssh/features/dashboard/models/process_info.dart';
 import 'package:aetherssh/features/dashboard/models/server_stats.dart';
 import 'package:aetherssh/features/dashboard/models/ssh_connection_state.dart';
 import 'package:aetherssh/features/dashboard/repositories/server_repository.dart';
@@ -459,23 +462,33 @@ class ServerMonitorViewModel extends AsyncNotifier<ServerMonitorState>
     if (client == null || cpuState == null) return;
 
     try {
+      final currentServer = await _repository.getServerById(serverId);
+      final isWindows = currentServer?.osDistro.toLowerCase().contains('windows') == true;
+
       final stopwatch = Stopwatch()..start();
 
       // [Fix 2] Hard 10s timeout on SSH run
-      final result = await client
-          .run(LinuxParser.linuxMetricsCommand)
-          .timeout(_kSshTimeout);
+      final cmd = isWindows
+          ? WindowsParser.windowsMetricsCommand
+          : LinuxParser.linuxMetricsCommand;
+
+      final result = await client.run(cmd).timeout(_kSshTimeout);
       stopwatch.stop();
 
       final rawOutput = utf8.decode(result).trim();
       final latencyMs = stopwatch.elapsedMilliseconds;
 
-      ServerStats stats = await _parseInIsolate(
-        rawOutput,
-        cpuState.prevIdle,
-        cpuState.prevTotal,
-        latencyMs,
-      );
+      ServerStats stats;
+      if (isWindows) {
+        stats = WindowsParser.parseMetrics(rawOutput, latencyMs: latencyMs);
+      } else {
+        stats = await _parseInIsolate(
+          rawOutput,
+          cpuState.prevIdle,
+          cpuState.prevTotal,
+          latencyMs,
+        );
+      }
 
       // Geolocation (cached per server)
       String serverLoc = '';
@@ -812,6 +825,8 @@ class ServerMonitorViewModel extends AsyncNotifier<ServerMonitorState>
         cpuModel: statsMap['cpuModel'] ?? '',
         cpuCores: statsMap['cpuCores'] ?? 0,
         cpuSpeed: statsMap['cpuSpeed'] ?? '',
+        gpuStats: statsMap['gpuStats'] ?? GpuStats.none,
+        topProcesses: (statsMap['topProcesses'] as List<ProcessItem>?) ?? const [],
       );
     } catch (e, stackTrace) {
       debugPrint('Isolate Parsing Error: $e\n$stackTrace');

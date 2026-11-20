@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
+import 'package:aetherssh/features/dashboard/models/process_info.dart';
 
 part 'server_stats.freezed.dart';
 
@@ -30,5 +32,7 @@ abstract class ServerStats with _$ServerStats {
     @Default(0.0) double load1,
     @Default(0.0) double load5,
     @Default(0.0) double load15,
+    @Default(GpuStats.none) GpuStats gpuStats,
+    @Default([]) List<ProcessItem> topProcesses,
   }) = _ServerStats;
 }
