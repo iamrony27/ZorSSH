@@ -68,7 +68,7 @@ class CpuTicks {
 
 class LinuxParser {
   static const String linuxMetricsCommand =
-      'cat /proc/stat; echo "|||"; free -b; echo "|||"; df -k /; echo "|||"; cat /proc/uptime; echo "|||"; hostname; echo "|||"; hostname -I | awk \'{print \$1}\'; echo "|||"; grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d \'"\'; echo "|||"; uname -r; echo "|||"; (lscpu 2>/dev/null | grep -E "Model name|CPU\\(s\\)|CPU max MHz" || cat /proc/cpuinfo | grep -E "model name|cpu MHz" | head -n 5); echo "|||"; (nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null || echo "NO_GPU"); echo "|||"; (ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -n 7 | tail -n +2 || ps -eo pid,comm,%cpu,%mem | head -n 7 | tail -n +2); exit';
+      'cat /proc/stat; echo "|||"; free -b; echo "|||"; df -k /; echo "|||"; cat /proc/uptime; echo "|||"; hostname; echo "|||"; hostname -I | awk \'{print \$1}\'; echo "|||"; grep PRETTY_NAME /etc/os-release | cut -d= -f2 | tr -d \'"\'; echo "|||"; uname -r; echo "|||"; (lscpu 2>/dev/null | grep -E "Model name|CPU\\(s\\)|CPU max MHz" || cat /proc/cpuinfo | grep -E "model name|cpu MHz" | head -n 5); echo "|||"; (gpu_out=""; nv_out=\$(nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null); if [ -n "\$nv_out" ]; then while IFS= read -r nv; do [ -n "\$nv" ] && gpu_out="\${gpu_out}NVIDIA|\$(echo "\$nv" | sed \'s/, /|/g\')\\n"; done <<< "\$nv_out"; fi; for c in /sys/class/drm/card[0-9]*/device; do [ -d "\$c" ] || continue; vb="\$(cat "\$c/vendor" 2>/dev/null)"; case "\$vb" in 0x1002) vn="AMD" ;; 0x10de) vn="NVIDIA" ;; 0x8086) vn="INTEL" ;; *) continue ;; esac; n="\$(cat "\$c/product_name" 2>/dev/null || cat "\$c/board_info" 2>/dev/null)"; if [ -z "\$n" ]; then n="\$(lspci 2>/dev/null | grep -iE \'VGA|3D|Display\' | grep -iE \'AMD|ATI|NVIDIA|Intel\' | head -n1 | sed \'s/.*: //\' | sed \'s/ (rev.*)//\')"; fi; [ -n "\$n" ] || n="\$vn GPU"; echo "\$gpu_out" | grep -Fq "|\$n|" && continue; u="\$(cat "\$c/gpu_busy_percent" 2>/dev/null)"; [ -n "\$u" ] || u="0"; vu="\$(cat "\$c/mem_info_vram_used" 2>/dev/null)"; vt="\$(cat "\$c/mem_info_vram_total" 2>/dev/null)"; t=""; for h in "\$c"/hwmon/hwmon*/temp1_input; do [ -f "\$h" ] && t="\$(cat "\$h" 2>/dev/null)" && break; done; [ -n "\$t" ] && t="\$((t/1000))" || t="0"; [ -n "\$vu" ] && vu="\$((vu/1024/1024))" || vu="0"; [ -n "\$vt" ] && vt="\$((vt/1024/1024))" || vt="0"; gpu_out="\${gpu_out}\${vn}|\${n}|\${u}|\${vu}|\${vt}|\${t}\\n"; done; if [ -z "\$gpu_out" ]; then lspci_out=\$(lspci 2>/dev/null | grep -iE \'VGA|3D|Display\' | sed \'s/.*: //\' | sed \'s/ (rev.*)//\'); if [ -n "\$lspci_out" ]; then while IFS= read -r gl; do [ -z "\$gl" ] && continue; gvn="GPU"; echo "\$gl" | grep -qiE \'NVIDIA|GeForce|RTX|GTX\' && gvn="NVIDIA"; echo "\$gl" | grep -qiE \'AMD|ATI|Radeon\' && gvn="AMD"; echo "\$gl" | grep -qiE \'Intel\' && gvn="INTEL"; gpu_out="\${gpu_out}\${gvn}|\${gl}|0|0|0|0\\n"; done <<< "\$lspci_out"; fi; fi; if [ -n "\$gpu_out" ]; then printf "%b" "\$gpu_out"; else echo "NO_GPU"; fi); echo "|||"; (ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -n 7 | tail -n +2 || ps -eo pid,comm,%cpu,%mem | head -n 7 | tail -n +2); exit';
 
   static final RegExp _whiteSpace = RegExp(r'\s+');
   static final RegExp _diskPercentageRegex = RegExp(r'\s+(\d+)%');
@@ -353,9 +353,9 @@ class LinuxParser {
         : {'model': '', 'cores': 0, 'speed': ''};
 
     // 10. GPU Stats (Part 9)
-    final gpuStats = parts.length > 9
-        ? GpuStats.parseNvidiaSmi(parts[9])
-        : GpuStats.none;
+    final gpuLines = parts.length > 9 ? parts[9].trim().split('\n').where((l) => l.trim().isNotEmpty).toList() : <String>[];
+    final gpus = gpuLines.map(GpuStats.parse).where((g) => g.hasGpu).toList();
+    final gpuStats = gpus.isNotEmpty ? gpus.first : (parts.length > 9 ? GpuStats.parse(parts[9]) : GpuStats.none);
 
     // 11. Top Processes (Part 10)
     final List<ProcessItem> topProcesses = [];
@@ -389,6 +389,7 @@ class LinuxParser {
       'load5': 0.0,
       'load15': 0.0,
       'gpuStats': gpuStats,
+      'gpus': gpus,
       'topProcesses': topProcesses,
     };
   }

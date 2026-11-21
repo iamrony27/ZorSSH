@@ -26,7 +26,7 @@ class AppIconTile extends ConsumerWidget {
   static const List<AppIconOption> _iconOptions = [
     AppIconOption(
       label: 'Default',
-      assetPath: 'assets/images/aether-logo.png',
+      assetPath: 'assets/images/zor-logo.png',
       isActive: true,
     ),
   ];

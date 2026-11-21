@@ -17,25 +17,62 @@ class OsIconWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = osInfo ?? OsInfo.fromDistroString(osDistro);
+    final d = (info.distroName.isNotEmpty ? info.distroName : osDistro).toLowerCase();
 
-    switch (info.distroKey) {
-      case 'windows':
-        return _buildWindowsLogo(size);
-      case 'ubuntu':
-        return _buildUbuntuLogo(size);
-      case 'debian':
-        return _buildDebianLogo(size);
-      case 'mint':
-        return _buildMintLogo(size);
-      case 'fedora':
-        return _buildFedoraLogo(size);
-      case 'arch':
-        return _buildArchLogo(size);
-      case 'mac':
-        return _buildMacLogo(size);
-      default:
-        return _buildLinuxLogo(size);
+    if (info.isWindows || d.contains('windows')) return _buildWindowsLogo(size);
+    if (d.contains('ubuntu')) return _buildUbuntuLogo(size);
+    if (d.contains('debian')) return _buildDebianLogo(size);
+    if (d.contains('mint')) return _buildMintLogo(size);
+    if (d.contains('fedora')) return _buildFedoraLogo(size);
+    if (d.contains('arch')) return _buildArchLogo(size);
+    if (d.contains('centos') || d.contains('rhel') || d.contains('red hat') || d.contains('rocky') || d.contains('alma')) {
+      return _buildRhelLogo(size);
     }
+    if (d.contains('mac') || d.contains('darwin')) return _buildMacLogo(size);
+    if (d.contains('android')) return _buildAndroidLogo(size);
+    if (info.isLinux || d.contains('linux')) return _buildLinuxLogo(size);
+    return _buildGenericLogo(size);
+  }
+
+  Widget _buildRhelLogo(double size) {
+    return Tooltip(
+      message: 'Red Hat / RHEL',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(color: Color(0xFFEE0000), shape: BoxShape.circle),
+        child: Center(
+          child: Text('RH', style: TextStyle(fontSize: size * 0.34, fontWeight: FontWeight.w900, color: Colors.white)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAndroidLogo(double size) {
+    return Tooltip(
+      message: 'Android',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(color: Color(0xFF3DDC84), shape: BoxShape.circle),
+        child: Center(child: Icon(LucideIcons.bot, size: size * 0.58, color: Colors.white)),
+      ),
+    );
+  }
+
+  Widget _buildGenericLogo(double size) {
+    return Tooltip(
+      message: 'OS',
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          shape: BoxShape.circle,
+        ),
+        child: Center(child: Icon(LucideIcons.monitor, size: size * 0.55, color: Colors.white70)),
+      ),
+    );
   }
 
   Widget _buildWindowsLogo(double size) {

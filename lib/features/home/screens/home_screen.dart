@@ -93,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
-                  'assets/images/aether-logo.png',
+                  'assets/images/zor-logo.png',
                   fit: BoxFit.cover,
                 ),
               ),

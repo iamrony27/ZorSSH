@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:aetherssh/core/widgets/os_icon.dart';
 import 'package:aetherssh/features/dashboard/models/server_stats.dart';
 
 class FocalMetricHeader extends ConsumerWidget {
@@ -51,6 +52,10 @@ class FocalMetricHeader extends ConsumerWidget {
               icon: LucideIcons.monitor,
               label: 'DISTRO',
               value: stats.osDistro.isEmpty ? 'Unknown' : stats.osDistro,
+              leading: OsIconWidget(
+                osDistro: stats.osDistro,
+                size: 18,
+              ),
             ),
           ],
         ),
@@ -105,6 +110,7 @@ class FocalMetricHeader extends ConsumerWidget {
     required String label,
     required String value,
     bool isMonospace = false,
+    Widget? leading,
   }) {
     return Expanded(
       child: Row(
@@ -115,7 +121,7 @@ class FocalMetricHeader extends ConsumerWidget {
               shape: BoxShape.circle,
               color: Colors.white.withValues(alpha: 0.05),
             ),
-            child: Icon(icon, size: 16, color: Colors.white),
+            child: leading ?? Icon(icon, size: 16, color: Colors.white),
           ),
           const SizedBox(width: 12),
           Expanded(

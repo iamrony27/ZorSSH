@@ -56,7 +56,7 @@ class AiConnectionResult {
 
 class AiService {
   static const String defaultNvidiaEndpoint = 'https://integrate.api.nvidia.com/v1';
-  static const String defaultNvidiaModel = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+  static const String defaultNvidiaModel = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
   static const String embeddedNvidiaApiKey = 'nvapi-placeholder';
 
   /// Convenience alias for cleanCommandOutput
@@ -64,11 +64,18 @@ class AiService {
 
   /// Test connection to NVIDIA NIM or OpenAI-compatible endpoint
   static Future<AiConnectionResult> testConnection({
-    required String endpoint,
-    required String apiKey,
-    required String model,
+    String endpoint = defaultNvidiaEndpoint,
+    String apiKey = embeddedNvidiaApiKey,
+    String model = defaultNvidiaModel,
   }) async {
-    final cleanEndpoint = endpoint.trim().replaceAll(RegExp(r'/+$'), '');
+    final effectiveApiKey =
+        apiKey.trim().isEmpty ? embeddedNvidiaApiKey : apiKey.trim();
+    final effectiveEndpoint =
+        endpoint.trim().isEmpty ? defaultNvidiaEndpoint : endpoint.trim();
+    final effectiveModel =
+        model.trim().isEmpty ? defaultNvidiaModel : model.trim();
+
+    final cleanEndpoint = effectiveEndpoint.replaceAll(RegExp(r'/+$'), '');
     final uri = Uri.parse('$cleanEndpoint/chat/completions');
 
     try {
@@ -76,11 +83,11 @@ class AiService {
           .post(
             uri,
             headers: {
-              'Authorization': 'Bearer ${apiKey.trim()}',
+              'Authorization': 'Bearer $effectiveApiKey',
               'Content-Type': 'application/json',
             },
             body: jsonEncode({
-              'model': model.trim(),
+              'model': effectiveModel,
               'messages': [
                 {'role': 'user', 'content': 'echo test'},
               ],
@@ -92,7 +99,7 @@ class AiService {
 
       if (response.statusCode == 200) {
         return AiConnectionResult.success(
-          'Connected successfully to ${model.trim()}',
+          'Connected successfully to $effectiveModel',
         );
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         return AiConnectionResult.failure(
@@ -100,7 +107,7 @@ class AiService {
         );
       } else if (response.statusCode == 404) {
         return AiConnectionResult.failure(
-          'Endpoint or Model "$model" not found (404)',
+          'Endpoint or Model "$effectiveModel" not found (404)',
         );
       } else if (response.statusCode == 429) {
         return AiConnectionResult.failure(
@@ -131,11 +138,18 @@ class AiService {
   static Future<String> generateCommand({
     required String userPrompt,
     required OsInfo osInfo,
-    required String endpoint,
-    required String apiKey,
-    required String model,
+    String endpoint = defaultNvidiaEndpoint,
+    String apiKey = embeddedNvidiaApiKey,
+    String model = defaultNvidiaModel,
   }) async {
-    final cleanEndpoint = endpoint.trim().replaceAll(RegExp(r'/+$'), '');
+    final effectiveApiKey =
+        apiKey.trim().isEmpty ? embeddedNvidiaApiKey : apiKey.trim();
+    final effectiveEndpoint =
+        endpoint.trim().isEmpty ? defaultNvidiaEndpoint : endpoint.trim();
+    final effectiveModel =
+        model.trim().isEmpty ? defaultNvidiaModel : model.trim();
+
+    final cleanEndpoint = effectiveEndpoint.replaceAll(RegExp(r'/+$'), '');
     final uri = Uri.parse('$cleanEndpoint/chat/completions');
 
     final targetOsLabel = osInfo.isWindows
@@ -160,11 +174,11 @@ STRICT INSTRUCTIONS:
         .post(
           uri,
           headers: {
-            'Authorization': 'Bearer ${apiKey.trim()}',
+            'Authorization': 'Bearer $effectiveApiKey',
             'Content-Type': 'application/json',
           },
           body: jsonEncode({
-            'model': model.trim(),
+            'model': effectiveModel,
             'messages': [
               {'role': 'system', 'content': systemPrompt},
               {'role': 'user', 'content': userPrompt.trim()},

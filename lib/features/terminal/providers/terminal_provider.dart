@@ -98,6 +98,7 @@ class TerminalNotifier extends StateNotifier<TerminalState> {
     if (_outputBuffer.isNotEmpty) {
       state.terminal.write(_outputBuffer.toString());
       _outputBuffer.clear();
+      // keep terminal at bottom on output
     }
     _stdoutSub?.resume();
     _stderrSub?.resume();
@@ -188,7 +189,7 @@ class TerminalNotifier extends StateNotifier<TerminalState> {
   /// Send raw bytes — e.g. Ctrl-C `\x03`, Ctrl-D `\x04`.
   void sendRaw(String raw) {
     if (!state.isConnected || _session == null) return;
-    _session!.stdin.add(utf8.encode(raw));
+_session!.stdin.add(utf8.encode(raw));
   }
 
   void clearOutput() => state.terminal.write('\x1b[2J\x1b[H');

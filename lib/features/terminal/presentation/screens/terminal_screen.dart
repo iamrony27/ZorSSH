@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,7 +12,6 @@ import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/localization/app_localization.dart';
 import 'package:aetherssh/core/utils/error_mapper.dart';
 import 'package:aetherssh/core/widgets/os_icon.dart';
-import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
 import 'package:aetherssh/features/terminal/presentation/widgets/ai_command_sheet.dart';
 import 'package:aetherssh/features/terminal/providers/terminal_provider.dart';
 import 'package:xterm/xterm.dart' hide TerminalState;
@@ -31,11 +29,14 @@ class TerminalScreen extends ConsumerStatefulWidget {
 
 class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   final _terminalController = TerminalController();
+  final _terminalScrollController = ScrollController();
   bool _ctrlActive = false;
   bool _altActive = false;
+  double _lastBottomInset = 0;
 
   void _processTerminalInput(String data) {
     if (data.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollTerminalToBottom());
     String processed = data;
     if (_ctrlActive || _altActive) {
       final buffer = StringBuffer();
@@ -73,13 +74,6 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
     terminal.onOutput = _processTerminalInput;
   }
 
-  Future<void> _handlePaste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    if (data?.text != null && data!.text!.isNotEmpty) {
-      ref.read(terminalProvider.notifier).sendRaw(data.text!);
-    }
-  }
-
   void _openAiCommands(Server? server) {
     if (server == null) return;
     AiCommandSheet.show(
@@ -115,7 +109,14 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   @override
   void dispose() {
     _terminalController.dispose();
+    _terminalScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollTerminalToBottom() {
+    if (!_terminalScrollController.hasClients) return;
+    final pos = _terminalScrollController.position;
+    _terminalScrollController.jumpTo(pos.maxScrollExtent);
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────
@@ -123,9 +124,15 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(terminalProvider);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    if (bottomInset != _lastBottomInset) {
+      _lastBottomInset = bottomInset;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollTerminalToBottom());
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.background,
+      resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(state),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
@@ -229,20 +236,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
             tooltip: 'AI Commands',
             onPressed: () => _openAiCommands(state.selectedServer),
           ),
-          // Sync Clipboard to PC
-          IconButton(
-            icon: const Icon(LucideIcons.clipboardCopy, size: 18),
-            color: Colors.blueAccent,
-            tooltip: 'Sync Clipboard to PC',
-            onPressed: () {
-              if (state.selectedServer != null) {
-                ClipboardSyncSheet.show(
-                  context,
-                  server: state.selectedServer!,
-                );
-              }
-            },
-          ),
+
           // Clear output
           IconButton(
             icon: const Icon(LucideIcons.eraser, size: 18),
@@ -694,6 +688,8 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   // ─── Terminal View ────────────────────────────────────────────────────────
 
   Widget _buildTerminalView(TerminalState state) {
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final keyboardOpen = viewInsets.bottom > 0;
     return Column(
       children: [
         _TerminalStatusBar(
@@ -702,57 +698,60 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
         ),
         Expanded(
           child: Stack(
-            alignment: Alignment.center,
+            fit: StackFit.expand,
             children: [
-              // High-Tech Zor Watermark in Terminal Background
               IgnorePointer(
-                child: Opacity(
-                  opacity: 0.08,
-                  child: Image.asset(
-                    'assets/images/zor-logo.png',
-                    width: 230,
-                    height: 230,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+                child: _TerminalWatermark(osDistro: state.selectedServer?.osDistro ?? ''),
               ),
-              TerminalView(
-                state.terminal,
-                controller: _terminalController,
-                autofocus: true,
-                textStyle: TerminalStyle(
-                  fontFamily: GoogleFonts.firaCode().fontFamily!,
-                  fontSize: 13,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: TerminalView(
+                  state.terminal,
+                  controller: _terminalController,
+                  scrollController: _terminalScrollController,
+                  autofocus: true,
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                  textStyle: TerminalStyle(
+                    fontFamily: GoogleFonts.firaCode().fontFamily!,
+                    fontSize: 13,
+                  ),
+                  theme: _getTerminalTheme(),
                 ),
-                theme: _getTerminalTheme(),
               ),
             ],
           ),
         ),
-        _QuickKeysBar(
-          terminal: state.terminal,
-          isCtrlActive: _ctrlActive,
-          isAltActive: _altActive,
-          onCtrlToggle: () {
-            setState(() {
-              _ctrlActive = !_ctrlActive;
-            });
-          },
-          onAltToggle: () {
-            setState(() {
-              _altActive = !_altActive;
-            });
-          },
-          onKeyPress: _processTerminalInput,
-          onPaste: _handlePaste,
-          onAiCommands: () => _openAiCommands(state.selectedServer),
-          onSyncClipboard: () {
-            if (state.selectedServer != null) {
-              ClipboardSyncSheet.show(context, server: state.selectedServer!);
-            }
-          },
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          alignment: Alignment.bottomCenter,
+          child: keyboardOpen
+              ? Padding(
+                  padding: EdgeInsets.only(bottom: viewInsets.bottom),
+                  child: SafeArea(
+                    top: false,
+                    bottom: false,
+                    child: _QuickKeysBar(
+                      terminal: state.terminal,
+                      isCtrlActive: _ctrlActive,
+                      isAltActive: _altActive,
+                      onCtrlToggle: () {
+                        setState(() {
+                          _ctrlActive = !_ctrlActive;
+                        });
+                      },
+                      onAltToggle: () {
+                        setState(() {
+                          _altActive = !_altActive;
+                        });
+                      },
+                      onKeyPress: _processTerminalInput,
+                      onAiCommands: () => _openAiCommands(state.selectedServer),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
     );
   }
@@ -863,6 +862,102 @@ class _TerminalStatusBar extends StatelessWidget {
   }
 }
 
+class _TerminalWatermark extends StatelessWidget {
+  const _TerminalWatermark({this.osDistro = ''});
+
+  final String osDistro;
+
+  static const _zorLogoAsset = 'assets/images/zor-logo.png';
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = constraints.maxHeight;
+        final centerSize = (w * 0.38).clamp(120.0, 240.0);
+        return ClipRect(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.center,
+                      radius: 0.95,
+                      colors: [
+                        const Color(0xFF00E676).withValues(alpha: 0.04),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Background repeating watermark pattern
+              ..._buildTiles(w, h),
+              // Centered prominent watermark logo
+              Positioned(
+                left: (w - centerSize) / 2,
+                top: (h - centerSize) / 2 - 16,
+                child: Opacity(
+                  opacity: 0.08,
+                  child: Image.asset(
+                    _zorLogoAsset,
+                    width: centerSize,
+                    height: centerSize,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+              if (osDistro.isNotEmpty)
+                Positioned(
+                  right: 14,
+                  bottom: 10,
+                  child: Opacity(
+                    opacity: 0.12,
+                    child: OsIconWidget(osDistro: osDistro, size: 28),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildTiles(double w, double h) {
+    final widgets = <Widget>[];
+    const tileW = 140.0;
+    const tileH = 110.0;
+    int i = 0;
+    for (double y = -20; y < h + tileH; y += tileH) {
+      for (double x = -20; x < w + tileW; x += tileW) {
+        final dx = i.isEven ? 16.0 : -4.0;
+        final dy = i % 3 == 0 ? 8.0 : -6.0;
+        widgets.add(
+          Positioned(
+            left: x + dx,
+            top: y + dy,
+            child: Opacity(
+              opacity: 0.035,
+              child: Image.asset(
+                _zorLogoAsset,
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        );
+        i++;
+      }
+    }
+    return widgets;
+  }
+}
+
 class _QuickKeysBar extends StatelessWidget {
   const _QuickKeysBar({
     required this.terminal,
@@ -871,9 +966,7 @@ class _QuickKeysBar extends StatelessWidget {
     required this.onCtrlToggle,
     required this.onAltToggle,
     required this.onKeyPress,
-    required this.onPaste,
     required this.onAiCommands,
-    this.onSyncClipboard,
   });
 
   final Terminal terminal;
@@ -882,9 +975,7 @@ class _QuickKeysBar extends StatelessWidget {
   final VoidCallback onCtrlToggle;
   final VoidCallback onAltToggle;
   final ValueChanged<String> onKeyPress;
-  final VoidCallback onPaste;
   final VoidCallback onAiCommands;
-  final VoidCallback? onSyncClipboard;
 
   @override
   Widget build(BuildContext context) {
@@ -953,76 +1044,7 @@ class _QuickKeysBar extends StatelessWidget {
               ),
             ),
           ),
-          // Dedicated Paste button [UI-004]
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: SizedBox(
-                height: 36,
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppTheme.terminalMint.withValues(
-                      alpha: 0.12,
-                    ),
-                    foregroundColor: AppTheme.terminalMint,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(
-                        color: AppTheme.terminalMint.withValues(alpha: 0.3),
-                        width: 0.5,
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    minimumSize: const Size(64, 36),
-                  ),
-                  onPressed: onPaste,
-                  icon: const Icon(LucideIcons.clipboardPaste, size: 14),
-                  label: Text(
-                    'PASTE',
-                    style: GoogleFonts.firaCode(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.terminalMint,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (onSyncClipboard != null)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: SizedBox(
-                  height: 36,
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.blueAccent.withValues(alpha: 0.12),
-                      foregroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                          color: Colors.blueAccent.withValues(alpha: 0.3),
-                          width: 0.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      minimumSize: const Size(64, 36),
-                    ),
-                    onPressed: onSyncClipboard,
-                    icon: const Icon(LucideIcons.clipboardCopy, size: 14),
-                    label: Text(
-                      'PC CLIP',
-                      style: GoogleFonts.firaCode(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+
           ...keys.map((key) {
             final isCtrl = key.$1 == 'CTRL';
             final isAlt = key.$1 == 'ALT';

@@ -33,6 +33,7 @@ abstract class ServerStats with _$ServerStats {
     @Default(0.0) double load5,
     @Default(0.0) double load15,
     @Default(GpuStats.none) GpuStats gpuStats,
+    @Default([]) List<GpuStats> gpus,
     @Default([]) List<ProcessItem> topProcesses,
   }) = _ServerStats;
 }

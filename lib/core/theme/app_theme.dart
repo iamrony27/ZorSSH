@@ -166,9 +166,9 @@ class AppTheme {
       ),
 
       // Text Theme
-      textTheme: GoogleFonts.interTextTheme(
-        ThemeData.dark().textTheme,
-      ).apply(bodyColor: const Color(0xFFFAFAFA)),
+      textTheme: GoogleFonts.interTextTheme().apply(
+        bodyColor: const Color(0xFFFAFAFA),
+      ),
 
       // Bottom Navigation Bar Theme (Material 3 NavigationBar)
       navigationBarTheme: NavigationBarThemeData(

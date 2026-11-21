@@ -826,6 +826,7 @@ class ServerMonitorViewModel extends AsyncNotifier<ServerMonitorState>
         cpuCores: statsMap['cpuCores'] ?? 0,
         cpuSpeed: statsMap['cpuSpeed'] ?? '',
         gpuStats: statsMap['gpuStats'] ?? GpuStats.none,
+        gpus: (statsMap['gpus'] as List?)?.whereType<GpuStats>().toList() ?? const [],
         topProcesses: (statsMap['topProcesses'] as List<ProcessItem>?) ?? const [],
       );
     } catch (e, stackTrace) {

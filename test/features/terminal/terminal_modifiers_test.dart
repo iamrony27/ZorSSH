@@ -62,7 +62,12 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [terminalProvider.overrideWith((ref) => fakeNotifier)],
-            child: const MaterialApp(home: TerminalScreen()),
+            child: const MaterialApp(
+              home: MediaQuery(
+                data: MediaQueryData(viewInsets: EdgeInsets.only(bottom: 300)),
+                child: TerminalScreen(),
+              ),
+            ),
           ),
         );
         await tester.pumpAndSettle();
@@ -105,7 +110,12 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [terminalProvider.overrideWith((ref) => fakeNotifier)],
-            child: const MaterialApp(home: TerminalScreen()),
+            child: const MaterialApp(
+              home: MediaQuery(
+                data: MediaQueryData(viewInsets: EdgeInsets.only(bottom: 300)),
+                child: TerminalScreen(),
+              ),
+            ),
           ),
         );
         await tester.pumpAndSettle();

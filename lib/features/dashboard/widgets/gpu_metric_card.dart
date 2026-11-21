@@ -5,11 +5,19 @@ import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/theme/app_sizes.dart';
 import 'package:aetherssh/core/widgets/glow_border.dart';
 import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
+import 'package:aetherssh/features/dashboard/models/server_stats.dart';
+import 'package:aetherssh/features/dashboard/widgets/cpu_line_chart.dart';
 
 class GpuMetricCard extends StatelessWidget {
-  final GpuStats gpuStats;
+  final List<GpuStats> gpus;
+  final List<ServerStats> history;
 
-  const GpuMetricCard({super.key, required this.gpuStats});
+  GpuMetricCard({
+    super.key,
+    List<GpuStats>? gpus,
+    GpuStats? gpuStats,
+    this.history = const [],
+  }) : gpus = gpus ?? (gpuStats != null && gpuStats.hasGpu ? [gpuStats] : (gpuStats != null ? [gpuStats] : const []));
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +40,8 @@ class GpuMetricCard extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSizes.p20),
-            child: gpuStats.hasGpu
-                ? _buildActiveGpuView(context)
+            child: gpus.isNotEmpty
+                ? _buildGpuList(context)
                 : _buildNoGpuView(context),
           ),
         ),
@@ -72,7 +80,7 @@ class GpuMetricCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'Discrete GPU metrics appear when NVIDIA SMI or DRM is active.',
+                'GPU metrics appear when NVIDIA SMI or AMD DRM telemetry is available.',
                 style: GoogleFonts.inter(
                   color: AppTheme.textSecondary,
                   fontSize: 11,
@@ -85,12 +93,28 @@ class GpuMetricCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActiveGpuView(BuildContext context) {
-    final util = gpuStats.utilizationPct ?? 0.0;
+  Widget _buildGpuList(BuildContext context) {
+    return Column(
+      children: [
+        for (int i = 0; i < gpus.length; i++) ...[
+          _buildActiveGpuView(context, gpus[i], i),
+          if (i != gpus.length - 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.06)),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildActiveGpuView(BuildContext context, GpuStats gpuStats, int index) {
+    final util = (gpuStats.utilizationPct ?? 0.0).clamp(0.0, 100.0);
     final temp = gpuStats.temperatureC;
     final vramUsedGb = (gpuStats.vramUsedMb ?? 0) / 1024.0;
     final vramTotalGb = (gpuStats.vramTotalMb ?? 0) / 1024.0;
     final hasVram = (gpuStats.vramTotalMb ?? 0) > 0;
+    final accent = _vendorAccent(gpuStats.vendor);
 
     Color tempColor = AppTheme.terminalMint;
     if (temp != null) {
@@ -104,37 +128,38 @@ class GpuMetricCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // GPU Header & Temperature
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
               child: Row(
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF76B900).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      LucideIcons.circuitBoard,
-                      color: Color(0xFF76B900),
-                      size: 16,
-                    ),
-                  ),
+                  _VendorBadge(vendor: gpuStats.vendor),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      gpuStats.model,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          gpuStats.model,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _vendorName(gpuStats.vendor),
+                          style: GoogleFonts.inter(
+                            color: AppTheme.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -165,10 +190,7 @@ class GpuMetricCard extends StatelessWidget {
               ),
           ],
         ),
-
         const SizedBox(height: 16),
-
-        // Utilization Bar
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -181,7 +203,7 @@ class GpuMetricCard extends StatelessWidget {
               style: GoogleFonts.firaCode(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF76B900),
+                color: accent,
               ),
             ),
           ],
@@ -192,12 +214,26 @@ class GpuMetricCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (util / 100.0).clamp(0.0, 1.0),
             backgroundColor: Colors.white.withValues(alpha: 0.08),
-            color: const Color(0xFF76B900),
+            color: accent,
             minHeight: 6,
           ),
         ),
-
-        // VRAM Bar (if available)
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 120,
+          child: CpuLineChart(
+            history: history,
+            primaryColor: accent,
+            isDynamicScale: false,
+            getValue: (s) {
+              final list = s.gpus.isNotEmpty ? s.gpus : [s.gpuStats];
+              final g = index < list.length ? list[index] : list.last;
+              return (g.utilizationPct ?? 0.0).clamp(0.0, 100.0);
+            },
+            valueFormatter: (v) => '${v.toStringAsFixed(1)}%',
+            emptyMessage: 'Collecting GPU telemetry…',
+          ),
+        ),
         if (hasVram) ...[
           const SizedBox(height: 14),
           Row(
@@ -231,4 +267,159 @@ class GpuMetricCard extends StatelessWidget {
       ],
     );
   }
+
+  static String _vendorName(GpuVendor vendor) {
+    switch (vendor) {
+      case GpuVendor.nvidia:
+        return 'NVIDIA';
+      case GpuVendor.amd:
+        return 'AMD';
+      case GpuVendor.intel:
+        return 'Intel';
+      case GpuVendor.unknown:
+        return 'GPU';
+    }
+  }
+
+  static Color _vendorAccent(GpuVendor vendor) {
+    switch (vendor) {
+      case GpuVendor.nvidia:
+        return const Color(0xFF76B900);
+      case GpuVendor.amd:
+        return const Color(0xFFED1C24);
+      case GpuVendor.intel:
+        return const Color(0xFF0071C5);
+      case GpuVendor.unknown:
+        return AppTheme.terminalMint;
+    }
+  }
+}
+
+class _VendorBadge extends StatelessWidget {
+  final GpuVendor vendor;
+  const _VendorBadge({required this.vendor});
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = GpuMetricCard._vendorAccent(vendor);
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.35), width: 0.5),
+      ),
+      alignment: Alignment.center,
+      child: _VendorLogo(vendor: vendor, size: 20, color: accent),
+    );
+  }
+}
+
+class _VendorLogo extends StatelessWidget {
+  final GpuVendor vendor;
+  final double size;
+  final Color color;
+  const _VendorLogo({required this.vendor, required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size.square(size),
+      painter: switch (vendor) {
+        GpuVendor.nvidia => _NvidiaLogoPainter(color),
+        GpuVendor.amd => _AmdLogoPainter(color),
+        GpuVendor.intel => _IntelLogoPainter(color),
+        GpuVendor.unknown => _GenericGpuLogoPainter(color),
+      },
+    );
+  }
+}
+
+class _NvidiaLogoPainter extends CustomPainter {
+  final Color color;
+  _NvidiaLogoPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = size.width * 0.12..strokeCap = StrokeCap.round;
+    final eye = Paint()..color = color..style = PaintingStyle.fill;
+    final w = size.width; final h = size.height;
+    // stylized eye/spiral mark
+    final rect = Rect.fromLTWH(w*0.15, h*0.28, w*0.55, h*0.55);
+    canvas.drawArc(rect, -1.1, 4.2, false, p);
+    canvas.drawCircle(Offset(w*0.72, h*0.42), w*0.08, eye);
+    // "eye" surround
+    final p2 = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = size.width * 0.09;
+    canvas.drawArc(Rect.fromLTWH(w*0.28, h*0.38, w*0.5, h*0.35), -0.8, 2.2, false, p2);
+  }
+  @override
+  bool shouldRepaint(covariant _NvidiaLogoPainter old) => old.color != color;
+}
+
+class _AmdLogoPainter extends CustomPainter {
+  final Color color;
+  _AmdLogoPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..style = PaintingStyle.fill;
+    final w = size.width; final h = size.height;
+    // AMD arrow logo simplified: corner block + arrow
+    final path = Path()
+      ..moveTo(w*0.1, h*0.1)
+      ..lineTo(w*0.9, h*0.1)
+      ..lineTo(w*0.9, h*0.9)
+      ..lineTo(w*0.65, h*0.65)
+      ..lineTo(w*0.65, h*0.35)
+      ..lineTo(w*0.35, h*0.35)
+      ..lineTo(w*0.1, h*0.1)
+      ..close();
+    canvas.drawPath(path, p);
+    final p2 = Paint()..color = color..style = PaintingStyle.fill;
+    final arrow = Path()
+      ..moveTo(w*0.1, h*0.45)
+      ..lineTo(w*0.45, h*0.45)
+      ..lineTo(w*0.25, h*0.65)
+      ..lineTo(w*0.55, h*0.65)
+      ..lineTo(w*0.55, h*0.9)
+      ..lineTo(w*0.1, h*0.9)
+      ..close();
+    canvas.drawPath(arrow, p2);
+  }
+  @override
+  bool shouldRepaint(covariant _AmdLogoPainter old) => old.color != color;
+}
+
+class _IntelLogoPainter extends CustomPainter {
+  final Color color;
+  _IntelLogoPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = size.width * 0.1;
+    final w = size.width; final h = size.height;
+    // rounded square with "intel" swirl hint
+    final rrect = RRect.fromRectAndRadius(Rect.fromLTWH(w*0.08, h*0.2, w*0.84, h*0.6), Radius.circular(w*0.2));
+    canvas.drawRRect(rrect, p);
+    final tp = TextPainter(
+      text: TextSpan(text: 'intel', style: TextStyle(color: color, fontSize: w*0.28, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic, height: 1)),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset((w-tp.width)/2, (h-tp.height)/2));
+  }
+  @override
+  bool shouldRepaint(covariant _IntelLogoPainter old) => old.color != color;
+}
+
+class _GenericGpuLogoPainter extends CustomPainter {
+  final Color color;
+  _GenericGpuLogoPainter(this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = size.width * 0.1;
+    final w = size.width; final h = size.height;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w*0.15,h*0.25,w*0.7,h*0.5), Radius.circular(w*0.08)), p);
+    canvas.drawLine(Offset(w*0.35,h*0.75), Offset(w*0.35,h*0.85), p);
+    canvas.drawLine(Offset(w*0.65,h*0.75), Offset(w*0.65,h*0.85), p);
+  }
+  @override
+  bool shouldRepaint(covariant _GenericGpuLogoPainter old) => old.color != color;
 }

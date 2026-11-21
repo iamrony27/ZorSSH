@@ -8,7 +8,6 @@ import 'package:aetherssh/core/services/os_detector.dart';
 import 'package:aetherssh/core/services/secure_storage_service.dart';
 import 'package:aetherssh/core/theme/app_theme.dart';
 import 'package:aetherssh/core/widgets/os_icon.dart';
-import 'package:aetherssh/features/terminal/presentation/widgets/ai_setup_dialog.dart';
 import 'package:aetherssh/features/terminal/services/ai_service.dart';
 
 class AiCommandSheet extends ConsumerStatefulWidget {
@@ -28,6 +27,7 @@ class AiCommandSheet extends ConsumerStatefulWidget {
   }) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF141518),
       shape: const RoundedRectangleBorder(
@@ -76,16 +76,6 @@ class _AiCommandSheetState extends ConsumerState<AiCommandSheet> {
       _inputController.text = overridePrompt;
     }
 
-    final storage = ref.read(secureStorageServiceProvider);
-    final aiConfig = await storage.readAiConfig();
-
-    if (aiConfig['apiKey'] == null || aiConfig['apiKey']!.isEmpty) {
-      if (!mounted) return;
-      final configured = await AiSetupDialog.show(context);
-      if (!configured || !mounted) return;
-      return _generateCommand(prompt);
-    }
-
     setState(() {
       _isGenerating = true;
       _errorMessage = null;
@@ -93,14 +83,16 @@ class _AiCommandSheetState extends ConsumerState<AiCommandSheet> {
     });
 
     try {
+      final storage = ref.read(secureStorageServiceProvider);
+      final aiConfig = await storage.readAiConfig();
       final osInfo = OsInfo.fromDistroString(widget.server.osDistro);
 
       final command = await AiService.generateCommand(
         userPrompt: prompt,
         osInfo: osInfo,
-        endpoint: aiConfig['endpoint']!,
-        apiKey: aiConfig['apiKey']!,
-        model: aiConfig['model']!,
+        endpoint: aiConfig['endpoint'] ?? AiService.defaultNvidiaEndpoint,
+        apiKey: aiConfig['apiKey'] ?? AiService.embeddedNvidiaApiKey,
+        model: aiConfig['model'] ?? AiService.defaultNvidiaModel,
       );
 
       if (mounted) {

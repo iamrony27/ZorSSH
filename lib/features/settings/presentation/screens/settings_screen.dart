@@ -283,6 +283,7 @@ class SettingsScreen extends ConsumerWidget {
                       } else {
                         showModalBottomSheet(
                           context: context,
+                          useRootNavigator: true,
                           backgroundColor: AppTheme.surface,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(

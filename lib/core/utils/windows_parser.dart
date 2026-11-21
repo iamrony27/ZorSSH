@@ -32,7 +32,9 @@ class WindowsParser {
 
       // GPU Parsing
       final gpuRaw = decoded['gpuRaw']?.toString() ?? 'NO_GPU';
-      final gpuStats = GpuStats.parseNvidiaSmi(gpuRaw);
+      final gpuLines = gpuRaw.split(RegExp(r'[\r\n]+')).where((l) => l.trim().isNotEmpty).toList();
+      final gpus = gpuLines.map(GpuStats.parse).where((g) => g.hasGpu).toList();
+      final gpuStats = gpus.isNotEmpty ? gpus.first : GpuStats.parse(gpuRaw);
 
       // Top Processes Parsing
       final List<ProcessItem> processes = [];
@@ -64,6 +66,7 @@ class WindowsParser {
         cpuModel: cpuModel,
         cpuCores: cpuCores,
         gpuStats: gpuStats,
+        gpus: gpus,
         topProcesses: processes,
       );
     } catch (e) {

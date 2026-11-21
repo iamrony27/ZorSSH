@@ -2,28 +2,55 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class StorageHelper {
-  /// Resolves the primary public Downloads folder on Android or default downloads directory.
+  /// Resolves a writable Downloads directory.
+  /// On Android, prefer app-specific external Downloads to avoid scoped-storage
+  /// permission failures on modern Android versions.
   static Future<Directory> getDownloadsDirectoryPath() async {
     if (Platform.isAndroid) {
-      // Direct access to standard Android public Download directory
-      final primaryDownload = Directory('/storage/emulated/0/Download');
-      if (await primaryDownload.exists()) {
-        return primaryDownload;
-      }
+      final candidates = <Directory>[];
+
       try {
         final externalDirs = await getExternalStorageDirectories(
           type: StorageDirectory.downloads,
         );
-        if (externalDirs != null && externalDirs.isNotEmpty) {
-          return externalDirs.first;
+        if (externalDirs != null) {
+          candidates.addAll(externalDirs);
         }
       } catch (_) {}
+
       try {
-        final sysDownloads = await getDownloadsDirectory();
-        if (sysDownloads != null) {
-          return sysDownloads;
+        final external = await getExternalStorageDirectory();
+        if (external != null) {
+          candidates.add(Directory('${external.path}/Download'));
         }
       } catch (_) {}
+
+      try {
+        final docs = await getApplicationDocumentsDirectory();
+        candidates.add(Directory('${docs.path}/Downloads'));
+      } catch (_) {}
+
+      for (final dir in candidates) {
+        try {
+          if (!await dir.exists()) {
+            await dir.create(recursive: true);
+          }
+          final probe = File('${dir.path}/.aetherssh_write_probe');
+          await probe.writeAsString('ok', flush: true);
+          if (await probe.exists()) {
+            await probe.delete();
+          }
+          return dir;
+        } catch (_) {
+          // Try next candidate.
+        }
+      }
+
+      final fallback = await getApplicationDocumentsDirectory();
+      if (!await fallback.exists()) {
+        await fallback.create(recursive: true);
+      }
+      return fallback;
     }
 
     final downloadsDir = await getDownloadsDirectory();
@@ -35,14 +62,15 @@ class StorageHelper {
   /// Generates a non-colliding file path if the destination already exists.
   /// Example: 'test.zip' -> 'test (1).zip'
   static String getNonCollidingPath(String directoryPath, String filename) {
-    var targetFile = File('$directoryPath/$filename');
+    final safeName = filename.isEmpty ? 'download' : filename;
+    var targetFile = File('$directoryPath/$safeName');
     if (!targetFile.existsSync()) {
       return targetFile.path;
     }
 
-    final dotIndex = filename.lastIndexOf('.');
-    final name = dotIndex != -1 ? filename.substring(0, dotIndex) : filename;
-    final ext = dotIndex != -1 ? filename.substring(dotIndex) : '';
+    final dotIndex = safeName.lastIndexOf('.');
+    final name = dotIndex > 0 ? safeName.substring(0, dotIndex) : safeName;
+    final ext = dotIndex > 0 ? safeName.substring(dotIndex) : '';
 
     int counter = 1;
     while (targetFile.existsSync()) {

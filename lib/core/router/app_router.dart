@@ -29,114 +29,10 @@ final router = GoRouter(
   routes: [
     ShellRoute(
       navigatorKey: _shellNavigatorKey,
-      builder: (context, state, child) {
-        final mediaQuery = MediaQuery.of(context);
-        final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
-        final systemBottom = mediaQuery.padding.bottom;
-        final bottomMargin = systemBottom == 0 ? 16.0 : systemBottom;
-        final navBarHeight = 64.0 + bottomMargin;
-        final navBarClearance = isKeyboardOpen
-            ? systemBottom
-            : (navBarHeight + 16.0);
-
-        return Scaffold(
-          extendBody: true,
-          backgroundColor:
-              Colors.transparent, // Let underlying screens show background
-          body: MediaQuery(
-            data: mediaQuery.copyWith(
-              padding: mediaQuery.padding.copyWith(bottom: navBarClearance),
-              viewPadding: mediaQuery.viewPadding.copyWith(
-                bottom: navBarClearance,
-              ),
-            ),
-            child: child,
-          ),
-          bottomNavigationBar: isKeyboardOpen
-              ? const SizedBox.shrink()
-              : SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: 28,
-                                offset: const Offset(0, 10),
-                              ),
-                              BoxShadow(
-                                color: const Color(0xFF00E676)
-                                    .withValues(alpha: 0.06),
-                                blurRadius: 16,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                              child: Container(
-                                height: 64,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF131722)
-                                      .withValues(alpha: 0.95),
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    _buildNavItem(
-                                      context,
-                                      0,
-                                      LucideIcons.layoutDashboard,
-                                      'Dashboard',
-                                      _calculateSelectedIndex(context),
-                                    ),
-                                    _buildNavItem(
-                                      context,
-                                      1,
-                                      LucideIcons.terminal,
-                                      'Terminal',
-                                      _calculateSelectedIndex(context),
-                                    ),
-                                    _buildNavItem(
-                                      context,
-                                      2,
-                                      LucideIcons.folderClosed,
-                                      'Files',
-                                      _calculateSelectedIndex(context),
-                                    ),
-                                    _buildNavItem(
-                                      context,
-                                      3,
-                                      LucideIcons.settings,
-                                      'Settings',
-                                      _calculateSelectedIndex(context),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-        );
-      },
+      builder: (context, state, child) => _ShellScaffold(
+        location: state.uri.path,
+        child: child,
+      ),
       routes: [
         GoRoute(
           path: '/',
@@ -349,6 +245,183 @@ Page<dynamic> _buildSubScreenPage({
       );
     },
   );
+}
+
+class _ShellScaffold extends StatefulWidget {
+  final Widget child;
+  final String location;
+
+  const _ShellScaffold({
+    required this.child,
+    required this.location,
+  });
+
+  @override
+  State<_ShellScaffold> createState() => _ShellScaffoldState();
+}
+
+class _ShellScaffoldState extends State<_ShellScaffold> {
+  bool _isNavBarVisible = true;
+
+  @override
+  void didUpdateWidget(covariant _ShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.location != widget.location) {
+      if (!_isNavBarVisible) {
+        setState(() => _isNavBarVisible = true);
+      }
+    }
+  }
+
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+      // Scrolling down: hide navbar when scrolled down past 20px
+      if (delta > 4.0 && notification.metrics.pixels > 20) {
+        if (_isNavBarVisible) {
+          setState(() => _isNavBarVisible = false);
+        }
+      }
+      // Scrolling up: show navbar when actively scrolling upwards
+      else if (delta < -6.0) {
+        if (!_isNavBarVisible) {
+          setState(() => _isNavBarVisible = true);
+        }
+      }
+
+      // Reached near top - always show
+      if (notification.metrics.pixels <= 10 && !_isNavBarVisible) {
+        setState(() => _isNavBarVisible = true);
+      }
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
+    final systemBottom = mediaQuery.padding.bottom;
+
+    // Bottom margin lowered so navbar is positioned comfortably close to screen/gesture line
+    final bottomMargin = systemBottom > 0
+        ? (systemBottom * 0.4 + 4.0).clamp(6.0, 14.0)
+        : 10.0;
+    const navBarHeight = 58.0;
+    final navBarClearance = isKeyboardOpen
+        ? systemBottom
+        : (navBarHeight + bottomMargin + 10.0);
+
+    return Scaffold(
+      extendBody: true,
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.transparent,
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _onScrollNotification,
+        child: MediaQuery(
+          data: mediaQuery.copyWith(
+            padding: mediaQuery.padding.copyWith(bottom: navBarClearance),
+            viewPadding: mediaQuery.viewPadding.copyWith(
+              bottom: navBarClearance,
+            ),
+          ),
+          child: widget.child,
+        ),
+      ),
+      bottomNavigationBar: isKeyboardOpen
+          ? const SizedBox.shrink()
+          : Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, bottomMargin),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: AnimatedSlide(
+                  offset: _isNavBarVisible ? Offset.zero : const Offset(0, 2.0),
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: _isNavBarVisible ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: IgnorePointer(
+                      ignoring: !_isNavBarVisible,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 360),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(29),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                blurRadius: 28,
+                                offset: const Offset(0, 10),
+                              ),
+                              BoxShadow(
+                                color: const Color(0xFF00E676)
+                                    .withValues(alpha: 0.06),
+                                blurRadius: 16,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(29),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                              child: Container(
+                                height: navBarHeight,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131722)
+                                      .withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(29),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    _buildNavItem(
+                                      context,
+                                      0,
+                                      LucideIcons.layoutDashboard,
+                                      'Dashboard',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      1,
+                                      LucideIcons.terminal,
+                                      'Terminal',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      2,
+                                      LucideIcons.folderClosed,
+                                      'Files',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                    _buildNavItem(
+                                      context,
+                                      3,
+                                      LucideIcons.settings,
+                                      'Settings',
+                                      _calculateSelectedIndex(context),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
 }
 
 int _calculateSelectedIndex(BuildContext context) {
