@@ -10,7 +10,7 @@ SSH Server Manager & AI Terminal for Android.
 
 | Files | Settings |
 |---|---|
-| ![Files](screenshots/files.png) | ![Settings](screenshots/settings.png) |
+|| ![Settings](screenshots/settings.png) |
 
 ## Features
 
