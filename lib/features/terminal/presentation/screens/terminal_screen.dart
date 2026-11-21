@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,9 +31,85 @@ class TerminalScreen extends ConsumerStatefulWidget {
 class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   final _terminalController = TerminalController();
   final _terminalScrollController = ScrollController();
+  final _terminalFocusNode = FocusNode();
   bool _ctrlActive = false;
   bool _altActive = false;
   double _lastBottomInset = 0;
+
+  void _ensureTerminalFocus() {
+    if (!_terminalFocusNode.hasFocus) {
+      _terminalFocusNode.requestFocus();
+    }
+  }
+
+  Future<void> _handleCopy() async {
+    final selection = _terminalController.selection;
+    final terminal = ref.read(terminalProvider).terminal;
+    String text = '';
+    if (selection != null) {
+      text = terminal.buffer.getText(selection);
+    } else {
+      final buffer = terminal.buffer;
+      final lines = <String>[];
+      for (int i = 0; i < buffer.lines.length; i++) {
+        final lineStr = buffer.lines[i].getText().trimRight();
+        if (lineStr.isNotEmpty) lines.add(lineStr);
+      }
+      text = lines.join('\n');
+    }
+    if (text.isNotEmpty) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(selection != null
+                ? 'Copied selection to clipboard'
+                : 'Copied terminal output to clipboard'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleCut() async {
+    final selection = _terminalController.selection;
+    final terminal = ref.read(terminalProvider).terminal;
+    if (selection != null) {
+      final text = terminal.buffer.getText(selection);
+      await Clipboard.setData(ClipboardData(text: text));
+      _terminalController.clearSelection();
+      ref.read(terminalProvider.notifier).sendRaw('\x15');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cut selection to clipboard'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handlePaste() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+    if (text != null && text.isNotEmpty) {
+      final terminal = ref.read(terminalProvider).terminal;
+      terminal.paste(text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pasted ${text.length > 25 ? '${text.substring(0, 25)}...' : text}'),
+            duration: const Duration(milliseconds: 900),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
 
   void _processTerminalInput(String data) {
     if (data.isEmpty) return;
@@ -110,6 +187,7 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
   void dispose() {
     _terminalController.dispose();
     _terminalScrollController.dispose();
+    _terminalFocusNode.dispose();
     super.dispose();
   }
 
@@ -709,7 +787,17 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
                   state.terminal,
                   controller: _terminalController,
                   scrollController: _terminalScrollController,
+                  focusNode: _terminalFocusNode,
                   autofocus: true,
+                  onSecondaryTapDown: (details, offset) async {
+                    final selection = _terminalController.selection;
+                    if (selection != null) {
+                      await _handleCopy();
+                      _terminalController.clearSelection();
+                    } else {
+                      await _handlePaste();
+                    }
+                  },
                   padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
                   textStyle: TerminalStyle(
                     fontFamily: GoogleFonts.firaCode().fontFamily!,
@@ -747,6 +835,10 @@ class _TerminalScreenState extends ConsumerState<TerminalScreen> {
                       },
                       onKeyPress: _processTerminalInput,
                       onAiCommands: () => _openAiCommands(state.selectedServer),
+                      onCopy: _handleCopy,
+                      onCut: _handleCut,
+                      onPaste: _handlePaste,
+                      onEnsureFocus: _ensureTerminalFocus,
                     ),
                   ),
                 )
@@ -967,6 +1059,10 @@ class _QuickKeysBar extends StatelessWidget {
     required this.onAltToggle,
     required this.onKeyPress,
     required this.onAiCommands,
+    required this.onCopy,
+    required this.onCut,
+    required this.onPaste,
+    required this.onEnsureFocus,
   });
 
   final Terminal terminal;
@@ -976,23 +1072,36 @@ class _QuickKeysBar extends StatelessWidget {
   final VoidCallback onAltToggle;
   final ValueChanged<String> onKeyPress;
   final VoidCallback onAiCommands;
+  final VoidCallback onCopy;
+  final VoidCallback onCut;
+  final VoidCallback onPaste;
+  final VoidCallback onEnsureFocus;
 
   @override
   Widget build(BuildContext context) {
-    final keys = [
-      ('ESC', '\x1b'),
-      ('TAB', '\t'),
+    final keys = <(String, dynamic)>[
+      ('PASTE', 'action_paste'),
+      ('COPY', 'action_copy'),
+      ('CUT', 'action_cut'),
+      ('ESC', TerminalKey.escape),
+      ('TAB', TerminalKey.tab),
       ('CTRL', 'ctrl'),
       ('ALT', 'alt'),
-      ('UP', '\x1b[A'),
-      ('DOWN', '\x1b[B'),
-      ('LEFT', '\x1b[D'),
-      ('RIGHT', '\x1b[C'),
+      ('^C', '\x03'),
+      ('^D', '\x04'),
+      ('^Z', '\x1a'),
+      ('↑', TerminalKey.arrowUp),
+      ('↓', TerminalKey.arrowDown),
+      ('←', TerminalKey.arrowLeft),
+      ('→', TerminalKey.arrowRight),
       ('/', '/'),
       ('-', '-'),
       ('|', '|'),
-      ('HOME', '\x1b[H'),
-      ('END', '\x1b[F'),
+      ('~', '~'),
+      ('HOME', TerminalKey.home),
+      ('END', TerminalKey.end),
+      ('PGUP', TerminalKey.pageUp),
+      ('PGDN', TerminalKey.pageDown),
     ];
 
     return Container(
@@ -1017,6 +1126,8 @@ class _QuickKeysBar extends StatelessWidget {
               child: SizedBox(
                 height: 36,
                 child: ElevatedButton.icon(
+                  focusNode:
+                      FocusNode(canRequestFocus: false, skipTraversal: true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
                         const Color(0xFF76B900).withValues(alpha: 0.18),
@@ -1031,7 +1142,10 @@ class _QuickKeysBar extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                   ),
-                  onPressed: onAiCommands,
+                  onPressed: () {
+                    onEnsureFocus();
+                    onAiCommands();
+                  },
                   icon: const Icon(LucideIcons.sparkles, size: 14),
                   label: Text(
                     'AI Commands',
@@ -1046,12 +1160,16 @@ class _QuickKeysBar extends StatelessWidget {
           ),
 
           ...keys.map((key) {
+            final action = key.$2;
             final isCtrl = key.$1 == 'CTRL';
             final isAlt = key.$1 == 'ALT';
             final isKeyActive =
                 (isCtrl && isCtrlActive) || (isAlt && isAltActive);
             final isModifier =
                 key.$1 == 'ESC' || key.$1 == 'TAB' || isCtrl || isAlt;
+            final isClipboardAction = action == 'action_paste' ||
+                action == 'action_copy' ||
+                action == 'action_cut';
 
             Color backgroundColor;
             Color foregroundColor;
@@ -1061,6 +1179,10 @@ class _QuickKeysBar extends StatelessWidget {
               backgroundColor = AppTheme.terminalMint;
               foregroundColor = const Color(0xFF111318);
               borderColor = AppTheme.terminalMint;
+            } else if (isClipboardAction) {
+              backgroundColor = AppTheme.primary.withValues(alpha: 0.15);
+              foregroundColor = AppTheme.primary;
+              borderColor = AppTheme.primary.withValues(alpha: 0.35);
             } else if (isModifier) {
               backgroundColor = AppTheme.terminalMint.withValues(alpha: 0.12);
               foregroundColor = AppTheme.terminalMint;
@@ -1071,12 +1193,65 @@ class _QuickKeysBar extends StatelessWidget {
               borderColor = Colors.white.withValues(alpha: 0.08);
             }
 
+            Widget labelWidget;
+            if (action == 'action_paste') {
+              labelWidget = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.clipboardPaste, size: 13, color: foregroundColor),
+                  const SizedBox(width: 4),
+                  Text('PASTE',
+                      style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: foregroundColor)),
+                ],
+              );
+            } else if (action == 'action_copy') {
+              labelWidget = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.copy, size: 13, color: foregroundColor),
+                  const SizedBox(width: 4),
+                  Text('COPY',
+                      style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: foregroundColor)),
+                ],
+              );
+            } else if (action == 'action_cut') {
+              labelWidget = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.scissors, size: 13, color: foregroundColor),
+                  const SizedBox(width: 4),
+                  Text('CUT',
+                      style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: foregroundColor)),
+                ],
+              );
+            } else {
+              labelWidget = Text(
+                key.$1,
+                style: GoogleFonts.firaCode(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: foregroundColor,
+                ),
+              );
+            }
+
             return Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 3),
                 child: SizedBox(
                   height: 36,
                   child: TextButton(
+                    focusNode:
+                        FocusNode(canRequestFocus: false, skipTraversal: true),
                     style: TextButton.styleFrom(
                       backgroundColor: backgroundColor,
                       foregroundColor: foregroundColor,
@@ -1087,10 +1262,11 @@ class _QuickKeysBar extends StatelessWidget {
                           width: isKeyActive ? 1.5 : 0.5,
                         ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      minimumSize: const Size(44, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      minimumSize: const Size(40, 36),
                     ),
                     onPressed: () {
+                      onEnsureFocus();
                       if (isCtrl) {
                         onCtrlToggle();
                         return;
@@ -1099,16 +1275,51 @@ class _QuickKeysBar extends StatelessWidget {
                         onAltToggle();
                         return;
                       }
-                      onKeyPress(key.$2);
+                      if (action == 'action_paste') {
+                        onPaste();
+                        return;
+                      }
+                      if (action == 'action_copy') {
+                        onCopy();
+                        return;
+                      }
+                      if (action == 'action_cut') {
+                        onCut();
+                        return;
+                      }
+                      if (action is TerminalKey) {
+                        final handled = terminal.keyInput(action,
+                            ctrl: isCtrlActive, alt: isAltActive);
+                        if (!handled) {
+                          if (action == TerminalKey.escape) {
+                            onKeyPress('\x1b');
+                          } else if (action == TerminalKey.tab) {
+                            onKeyPress('\t');
+                          } else if (action == TerminalKey.arrowUp) {
+                            onKeyPress('\x1b[A');
+                          } else if (action == TerminalKey.arrowDown) {
+                            onKeyPress('\x1b[B');
+                          } else if (action == TerminalKey.arrowLeft) {
+                            onKeyPress('\x1b[D');
+                          } else if (action == TerminalKey.arrowRight) {
+                            onKeyPress('\x1b[C');
+                          } else if (action == TerminalKey.home) {
+                            onKeyPress('\x1b[H');
+                          } else if (action == TerminalKey.end) {
+                            onKeyPress('\x1b[F');
+                          } else if (action == TerminalKey.pageUp) {
+                            onKeyPress('\x1b[5~');
+                          } else if (action == TerminalKey.pageDown) {
+                            onKeyPress('\x1b[6~');
+                          }
+                        }
+                        return;
+                      }
+                      if (action is String) {
+                        onKeyPress(action);
+                      }
                     },
-                    child: Text(
-                      key.$1,
-                      style: GoogleFonts.firaCode(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: foregroundColor,
-                      ),
-                    ),
+                    child: labelWidget,
                   ),
                 ),
               ),

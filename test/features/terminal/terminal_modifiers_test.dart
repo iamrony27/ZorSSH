@@ -138,5 +138,57 @@ void main() {
         expect(fakeNotifier.sentRaw.last, 'f');
       },
     );
+
+    testWidgets(
+      'Clipboard actions PASTE, COPY, CUT and keys ESC, TAB, ^C exist and function',
+      (tester) async {
+        final server = Server(
+          id: 'srv-term',
+          name: 'Terminal Server',
+          hostname: '10.0.0.1',
+          port: 22,
+          username: 'root',
+          password: '',
+          authType: AuthType.password,
+        );
+        fakeNotifier.setConnected(server);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [terminalProvider.overrideWith((ref) => fakeNotifier)],
+            child: const MaterialApp(
+              home: MediaQuery(
+                data: MediaQueryData(viewInsets: EdgeInsets.only(bottom: 300)),
+                child: TerminalScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Verify clipboard and key buttons are present
+        expect(find.text('PASTE'), findsOneWidget);
+        expect(find.text('COPY'), findsOneWidget);
+        expect(find.text('CUT'), findsOneWidget);
+        expect(find.text('ESC'), findsOneWidget);
+        expect(find.text('TAB'), findsOneWidget);
+        expect(find.text('^C'), findsOneWidget);
+
+        // Tap ESC
+        await tester.tap(find.text('ESC'));
+        await tester.pumpAndSettle();
+        expect(fakeNotifier.sentRaw, contains('\x1b'));
+
+        // Tap TAB
+        await tester.tap(find.text('TAB'));
+        await tester.pumpAndSettle();
+        expect(fakeNotifier.sentRaw, contains('\t'));
+
+        // Tap ^C
+        await tester.tap(find.text('^C'));
+        await tester.pumpAndSettle();
+        expect(fakeNotifier.sentRaw, contains('\x03'));
+      },
+    );
   });
 }
