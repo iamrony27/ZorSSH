@@ -79,7 +79,7 @@ void main() {
       expect(config.isNvidia, isTrue);
       expect(config.endpoint, 'https://integrate.api.nvidia.com/v1');
       expect(config.model, 'nvidia/nemotron-3.5-super-vl-120b-a12b');
-      expect(config.apiKey, 'nvapi-placeholder');
+      expect(config.apiKey, AiService.embeddedNvidiaApiKey);
     });
   });
 }

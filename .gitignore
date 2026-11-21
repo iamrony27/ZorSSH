@@ -47,3 +47,7 @@ orbit_original/
 
 # APK artifacts
 *.apk
+
+# Private build secrets (do not commit)
+secrets.json
+lib/core/config/secrets.local.dart

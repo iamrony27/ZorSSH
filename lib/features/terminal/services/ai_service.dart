@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:zorssh/core/config/secrets.dart';
 import 'package:zorssh/core/services/os_detector.dart';
 
 class AiConfig {
@@ -57,7 +58,7 @@ class AiConnectionResult {
 class AiService {
   static const String defaultNvidiaEndpoint = 'https://integrate.api.nvidia.com/v1';
   static const String defaultNvidiaModel = 'nvidia/nemotron-3.5-super-vl-120b-a12b';
-  static const String embeddedNvidiaApiKey = 'nvapi-placeholder';
+  static const String embeddedNvidiaApiKey = AppSecrets.defaultNvidiaApiKey;
 
   /// Convenience alias for cleanCommandOutput
   static String cleanCommand(String raw) => cleanCommandOutput(raw);

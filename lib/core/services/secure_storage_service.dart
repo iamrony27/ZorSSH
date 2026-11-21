@@ -4,6 +4,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:zorssh/core/config/secrets.dart';
 
 // ── Storage key constants ──────────────────────────────────────────────────
 const _kMasterPin = 'global_master_pin';
@@ -334,8 +335,7 @@ class SecureStorageService {
       return {
         'isCustom': 'false',
         'provider': 'nvidia',
-        'apiKey':
-            'nvapi-placeholder',
+        'apiKey': AppSecrets.defaultNvidiaApiKey,
         'model': 'nvidia/nemotron-3.5-super-vl-120b-a12b',
         'endpoint': 'https://integrate.api.nvidia.com/v1',
       };
