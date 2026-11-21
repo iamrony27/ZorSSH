@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/core/widgets/glow_border.dart';
-import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
-import 'package:aetherssh/features/dashboard/widgets/cpu_line_chart.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/widgets/glow_border.dart';
+import 'package:zorssh/features/dashboard/models/gpu_stats.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/widgets/cpu_line_chart.dart';
 
 class GpuMetricCard extends StatelessWidget {
   final List<GpuStats> gpus;

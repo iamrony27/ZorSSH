@@ -35,7 +35,7 @@ class StorageHelper {
           if (!await dir.exists()) {
             await dir.create(recursive: true);
           }
-          final probe = File('${dir.path}/.aetherssh_write_probe');
+          final probe = File('${dir.path}/.zorssh_write_probe');
           await probe.writeAsString('ok', flush: true);
           if (await probe.exists()) {
             await probe.delete();

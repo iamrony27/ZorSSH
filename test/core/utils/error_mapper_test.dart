@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/utils/error_mapper.dart';
+import 'package:zorssh/core/utils/error_mapper.dart';
 
 void main() {
   group('ErrorMapper [UI-006]', () {

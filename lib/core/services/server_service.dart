@@ -1,6 +1,6 @@
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
-import 'package:aetherssh/features/dashboard/repositories/server_repository.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/repositories/server_repository.dart';
 
 class ServerService {
   final ServerRepository _repository;

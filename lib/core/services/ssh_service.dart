@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
-import 'package:aetherssh/core/services/host_key_service.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/utils/app_logger.dart';
+import 'package:zorssh/core/services/host_key_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/utils/app_logger.dart';
 
 // A factory function for creating SSHClient instances, allowing for mocking in tests.
 typedef SSHClientFactory =

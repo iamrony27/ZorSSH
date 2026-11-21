@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/core/widgets/system_card.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/upi_donation_sheet.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/widgets/system_card.dart';
+import 'package:zorssh/features/settings/presentation/widgets/upi_donation_sheet.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AboutScreen extends StatefulWidget {

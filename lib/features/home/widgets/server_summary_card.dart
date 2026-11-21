@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
 
-import 'package:aetherssh/core/widgets/glow_border.dart';
-import 'package:aetherssh/core/providers/server_loading_provider.dart';
-import 'package:aetherssh/core/widgets/os_icon.dart';
-import 'package:aetherssh/core/widgets/pulsing_status_dot.dart';
+import 'package:zorssh/core/widgets/glow_border.dart';
+import 'package:zorssh/core/providers/server_loading_provider.dart';
+import 'package:zorssh/core/widgets/os_icon.dart';
+import 'package:zorssh/core/widgets/pulsing_status_dot.dart';
 
 class ServerSummaryCard extends ConsumerWidget {
   final Server server;

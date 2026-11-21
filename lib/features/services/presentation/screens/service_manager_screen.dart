@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:dartssh2/dartssh2.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/services/os_detector.dart';
-import 'package:aetherssh/core/services/service_management_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/widgets/os_icon.dart';
-import 'package:aetherssh/core/widgets/system_card.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/services/os_detector.dart';
+import 'package:zorssh/core/services/service_management_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/widgets/os_icon.dart';
+import 'package:zorssh/core/widgets/system_card.dart';
 
 class ServiceManagerScreen extends ConsumerStatefulWidget {
   final Server server;

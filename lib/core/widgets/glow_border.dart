@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
 
 class GlowBorder extends StatelessWidget {
   final Widget child;

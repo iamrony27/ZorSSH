@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/features/terminal/presentation/screens/terminal_screen.dart';
-import 'package:aetherssh/features/terminal/providers/terminal_provider.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/features/terminal/presentation/screens/terminal_screen.dart';
+import 'package:zorssh/features/terminal/providers/terminal_provider.dart';
 
 class FakeTerminalNotifier extends StateNotifier<TerminalState>
     implements TerminalNotifier {

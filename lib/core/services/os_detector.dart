@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
-import 'package:aetherssh/core/utils/app_logger.dart';
+import 'package:zorssh/core/utils/app_logger.dart';
 
 enum OsType { linux, windows, macos, unknown }
 

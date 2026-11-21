@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/features/files/data/remote_file.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/features/files/data/remote_file.dart';
 
 /// Next-gen floating file/folder card item widget
 class RemoteFileItem extends StatelessWidget {

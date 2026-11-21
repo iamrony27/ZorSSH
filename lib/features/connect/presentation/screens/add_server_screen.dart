@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/features/dashboard/providers/dashboard_providers.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/features/dashboard/providers/dashboard_providers.dart';
 import 'package:uuid/uuid.dart';
 
 class AddServerScreen extends ConsumerStatefulWidget {

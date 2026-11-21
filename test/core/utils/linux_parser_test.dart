@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/utils/linux_parser.dart';
+import 'package:zorssh/core/utils/linux_parser.dart';
 
 void main() {
   group('LinuxParser & CpuTicks [QA-001]', () {

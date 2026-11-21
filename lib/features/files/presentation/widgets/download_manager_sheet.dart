@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/utils/formatters.dart';
-import 'package:aetherssh/features/files/data/download_task.dart';
-import 'package:aetherssh/features/files/providers/file_browser_provider.dart';
-import 'package:aetherssh/features/files/services/download_manager.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/utils/formatters.dart';
+import 'package:zorssh/features/files/data/download_task.dart';
+import 'package:zorssh/features/files/providers/file_browser_provider.dart';
+import 'package:zorssh/features/files/services/download_manager.dart';
 
 class DownloadManagerSheet extends ConsumerWidget {
   const DownloadManagerSheet({super.key});

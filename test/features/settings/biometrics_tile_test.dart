@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aetherssh/core/services/biometric_service.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/features/settings/models/app_settings.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/biometrics_tile.dart';
-import 'package:aetherssh/features/settings/providers/settings_provider.dart';
-import 'package:aetherssh/features/settings/viewmodels/settings_viewmodel.dart';
+import 'package:zorssh/core/services/biometric_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/features/settings/models/app_settings.dart';
+import 'package:zorssh/features/settings/presentation/widgets/biometrics_tile.dart';
+import 'package:zorssh/features/settings/providers/settings_provider.dart';
+import 'package:zorssh/features/settings/viewmodels/settings_viewmodel.dart';
 
 class FakeBiometricService extends Fake implements BiometricService {
   bool available = true;

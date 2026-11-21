@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:aetherssh/core/data/entities/hive_server.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/core/data/entities/hive_server.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
 
 /// Repository layer for server data management
 /// Single source of truth for all server-related data operations

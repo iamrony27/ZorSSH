@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:aetherssh/core/services/geolocation_service.dart';
+import 'package:zorssh/core/services/geolocation_service.dart';
 
 class MockHttpClient extends Fake implements HttpClient {
   Uri? lastRequestedUri;

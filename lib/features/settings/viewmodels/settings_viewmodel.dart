@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aetherssh/features/settings/models/app_settings.dart';
+import 'package:zorssh/features/settings/models/app_settings.dart';
 
 // Keys for shared_preferences
 const _keyLanguage = 'settings_language';

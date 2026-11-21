@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:aetherssh/core/localization/app_translations.dart';
-import 'package:aetherssh/features/settings/providers/settings_provider.dart';
+import 'package:zorssh/core/localization/app_translations.dart';
+import 'package:zorssh/features/settings/providers/settings_provider.dart';
 
 /// Provider exposing the current language code.
 /// Reads from settingsProvider; defaults to 'en' while loading.

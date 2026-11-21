@@ -8,26 +8,26 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:uuid/uuid.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/core/utils/formatters.dart';
-import 'package:aetherssh/core/localization/app_localization.dart';
-import 'package:aetherssh/core/providers/server_loading_provider.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
-import 'package:aetherssh/features/dashboard/models/ssh_connection_state.dart';
-import 'package:aetherssh/features/dashboard/providers/dashboard_providers.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/utils/formatters.dart';
+import 'package:zorssh/core/localization/app_localization.dart';
+import 'package:zorssh/core/providers/server_loading_provider.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/models/ssh_connection_state.dart';
+import 'package:zorssh/features/dashboard/providers/dashboard_providers.dart';
 
-import 'package:aetherssh/features/dashboard/widgets/cpu_line_chart.dart';
-import 'package:aetherssh/features/dashboard/widgets/system_info_card.dart';
+import 'package:zorssh/features/dashboard/widgets/cpu_line_chart.dart';
+import 'package:zorssh/features/dashboard/widgets/system_info_card.dart';
 
-import 'package:aetherssh/features/dashboard/presentation/widgets/base_metric_card.dart';
-import 'package:aetherssh/features/dashboard/widgets/disk_usage_gauge.dart';
-import 'package:aetherssh/features/dashboard/widgets/gpu_metric_card.dart';
-import 'package:aetherssh/features/dashboard/widgets/top_processes_card.dart';
-import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
-import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
+import 'package:zorssh/features/dashboard/presentation/widgets/base_metric_card.dart';
+import 'package:zorssh/features/dashboard/widgets/disk_usage_gauge.dart';
+import 'package:zorssh/features/dashboard/widgets/gpu_metric_card.dart';
+import 'package:zorssh/features/dashboard/widgets/top_processes_card.dart';
+import 'package:zorssh/features/dashboard/models/gpu_stats.dart';
+import 'package:zorssh/core/widgets/clipboard_sync_sheet.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final String serverId;

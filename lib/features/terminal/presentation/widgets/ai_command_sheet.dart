@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/services/os_detector.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/widgets/os_icon.dart';
-import 'package:aetherssh/features/terminal/services/ai_service.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/services/os_detector.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/widgets/os_icon.dart';
+import 'package:zorssh/features/terminal/services/ai_service.dart';
 
 class AiCommandSheet extends ConsumerStatefulWidget {
   final Server server;

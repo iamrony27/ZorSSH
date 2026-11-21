@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
 
 class SystemCard extends StatelessWidget {
   final Widget child;

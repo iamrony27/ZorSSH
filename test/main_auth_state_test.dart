@@ -4,17 +4,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/main.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/main.dart';
 
 import 'dart:io';
 import 'package:hive/hive.dart';
-import 'package:aetherssh/features/auth/presentation/screens/pin_unlock_screen.dart';
-import 'package:aetherssh/core/data/entities/hive_server.dart';
+import 'package:zorssh/features/auth/presentation/screens/pin_unlock_screen.dart';
+import 'package:zorssh/core/data/entities/hive_server.dart';
 
-import 'package:aetherssh/features/settings/models/app_settings.dart';
-import 'package:aetherssh/features/settings/providers/settings_provider.dart';
-import 'package:aetherssh/features/settings/viewmodels/settings_viewmodel.dart';
+import 'package:zorssh/features/settings/models/app_settings.dart';
+import 'package:zorssh/features/settings/providers/settings_provider.dart';
+import 'package:zorssh/features/settings/viewmodels/settings_viewmodel.dart';
 
 class MockSettingsViewModel extends SettingsViewModel {
   @override

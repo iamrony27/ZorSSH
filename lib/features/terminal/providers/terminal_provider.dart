@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
 import 'package:xterm/xterm.dart';
 
 // ---------------------------------------------------------------------------

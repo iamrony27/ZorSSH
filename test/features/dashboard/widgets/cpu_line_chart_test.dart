@@ -1,8 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
-import 'package:aetherssh/features/dashboard/widgets/cpu_line_chart.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/widgets/cpu_line_chart.dart';
 
 void main() {
   group('CpuLineChart Widget Tests', () {

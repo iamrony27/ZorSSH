@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/localization/app_localization.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/features/settings/providers/settings_provider.dart';
+import 'package:zorssh/core/localization/app_localization.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/features/settings/providers/settings_provider.dart';
 
 /// Biometric authentication toggle tile [SEC-005].
 /// Requires biometric authentication (or Master PIN verification fallback)

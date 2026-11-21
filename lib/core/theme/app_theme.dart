@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
 
 class AppTheme {
   // Material 3 Dark Palette (Obsidian & Emerald)

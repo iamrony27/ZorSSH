@@ -4,7 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
 
 class LegalDocumentScreen extends StatelessWidget {
   final String title;

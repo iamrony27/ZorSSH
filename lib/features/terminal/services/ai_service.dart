@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:aetherssh/core/services/os_detector.dart';
+import 'package:zorssh/core/services/os_detector.dart';
 
 class AiConfig {
   final String provider; // 'nvidia' or 'custom'

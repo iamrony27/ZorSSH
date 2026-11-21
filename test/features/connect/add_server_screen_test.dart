@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/features/connect/presentation/screens/add_server_screen.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/features/connect/presentation/screens/add_server_screen.dart';
 
 void main() {
   group('AddServerScreen Security & Auth UI Tests [SEC-014, SEC-015, SEC-017]', () {

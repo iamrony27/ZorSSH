@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/features/dashboard/widgets/disk_usage_gauge.dart';
+import 'package:zorssh/features/dashboard/widgets/disk_usage_gauge.dart';
 
 void main() {
   group('DiskUsageGauge Widget Tests', () {

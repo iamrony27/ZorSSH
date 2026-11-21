@@ -2,10 +2,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:aetherssh/core/data/entities/hive_server.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/features/dashboard/repositories/server_repository.dart';
+import 'package:zorssh/core/data/entities/hive_server.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/features/dashboard/repositories/server_repository.dart';
 
 class MockHiveBox extends Mock implements Box<HiveServer> {}
 

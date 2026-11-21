@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/router/app_router.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/utils/app_logger.dart';
+import 'package:zorssh/core/router/app_router.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/utils/app_logger.dart';
 
 /// Callback invoked on first-time host key presentation (TOFU) to verify user approval.
 typedef HostKeyConfirmationCallback =

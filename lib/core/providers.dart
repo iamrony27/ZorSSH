@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/services/server_service.dart';
-import 'package:aetherssh/core/services/ssh_service.dart';
-import 'package:aetherssh/core/services/hive_service.dart';
-import 'package:aetherssh/features/dashboard/repositories/server_repository.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/services/host_key_service.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/services/server_service.dart';
+import 'package:zorssh/core/services/ssh_service.dart';
+import 'package:zorssh/core/services/hive_service.dart';
+import 'package:zorssh/features/dashboard/repositories/server_repository.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/services/host_key_service.dart';
 
 final serverServiceProvider = FutureProvider<ServerService>((ref) async {
   final repository = await ref.watch(serverRepositoryProvider.future);

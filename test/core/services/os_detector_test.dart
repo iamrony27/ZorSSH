@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/services/os_detector.dart';
+import 'package:zorssh/core/services/os_detector.dart';
 
 void main() {
   group('OsInfo.fromDistroString', () {

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
-import 'package:aetherssh/features/dashboard/models/process_info.dart';
+import 'package:zorssh/features/dashboard/models/gpu_stats.dart';
+import 'package:zorssh/features/dashboard/models/process_info.dart';
 
 /// CPU ticks data structure for delta calculation
 class CpuTicks {

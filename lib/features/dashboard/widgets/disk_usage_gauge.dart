@@ -2,8 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/utils/formatters.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/utils/formatters.dart';
 
 /// A modern, interactive donut chart for visualizing disk usage using fl_chart.
 ///

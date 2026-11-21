@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/services/sftp_service.dart';
+import 'package:zorssh/core/services/sftp_service.dart';
 
 void main() {
   group('SftpService POSIX Shell Escape & Path Validation [SEC-001]', () {

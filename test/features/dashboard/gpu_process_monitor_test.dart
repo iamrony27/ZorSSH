@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/utils/linux_parser.dart';
-import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
-import 'package:aetherssh/features/dashboard/models/process_info.dart';
+import 'package:zorssh/core/utils/linux_parser.dart';
+import 'package:zorssh/features/dashboard/models/gpu_stats.dart';
+import 'package:zorssh/features/dashboard/models/process_info.dart';
 
 void main() {
   group('GpuStats Model', () {

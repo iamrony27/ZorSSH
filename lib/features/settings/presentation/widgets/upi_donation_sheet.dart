@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
 
 class UpiDonationSheet {
   /// The official developer UPI ID

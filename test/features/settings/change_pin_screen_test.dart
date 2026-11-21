@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/features/settings/presentation/screens/change_pin_screen.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/features/settings/presentation/screens/change_pin_screen.dart';
 
 class MockSecureStorageService extends SecureStorageService {
   String? masterPin;

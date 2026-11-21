@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/features/terminal/services/ai_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/features/terminal/services/ai_service.dart';
 
 class AiSetupDialog extends ConsumerStatefulWidget {
   const AiSetupDialog({super.key});

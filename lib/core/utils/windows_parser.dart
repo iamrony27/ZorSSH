@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:aetherssh/features/dashboard/models/gpu_stats.dart';
-import 'package:aetherssh/features/dashboard/models/process_info.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/models/gpu_stats.dart';
+import 'package:zorssh/features/dashboard/models/process_info.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
 
 class WindowsParser {
   static const String windowsMetricsCommand =

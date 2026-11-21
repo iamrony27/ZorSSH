@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/services/clipboard_sync_service.dart';
+import 'package:zorssh/core/services/clipboard_sync_service.dart';
 
 void main() {
   group('ClipboardSyncService Tests', () {

@@ -5,9 +5,9 @@ import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:aetherssh/core/services/host_key_service.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/services/ssh_service.dart';
+import 'package:zorssh/core/services/host_key_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/services/ssh_service.dart';
 
 class MockSSHClient extends Mock implements SSHClient {}
 

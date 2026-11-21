@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
 
 /// A modern, high-performance telemetry line chart utilizing fl_chart.
 ///

@@ -4,11 +4,11 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:aetherssh/core/services/host_key_service.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/services/ssh_service.dart';
-import 'package:aetherssh/core/utils/app_logger.dart';
-import 'package:aetherssh/features/files/data/remote_file.dart';
+import 'package:zorssh/core/services/host_key_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/services/ssh_service.dart';
+import 'package:zorssh/core/utils/app_logger.dart';
+import 'package:zorssh/features/files/data/remote_file.dart';
 
 /// Cache entry for directory listings
 class _DirectoryCacheEntry {

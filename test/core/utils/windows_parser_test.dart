@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/utils/windows_parser.dart';
+import 'package:zorssh/core/utils/windows_parser.dart';
 
 void main() {
   group('WindowsParser - Metrics Telemetry', () {

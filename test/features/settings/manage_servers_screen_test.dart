@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/features/settings/presentation/screens/manage_servers_screen.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/features/settings/presentation/screens/manage_servers_screen.dart';
 
 void main() {
   group('ManageServersScreen Server Reordering & Drag Handle Tests [LOGIC-001]', () {

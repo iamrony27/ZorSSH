@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/utils/error_mapper.dart';
-import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
-import 'package:aetherssh/core/widgets/system_card.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/utils/error_mapper.dart';
+import 'package:zorssh/core/widgets/clipboard_sync_sheet.dart';
+import 'package:zorssh/core/widgets/system_card.dart';
 
 class ServerDetailsScreen extends ConsumerStatefulWidget {
   final Server server;

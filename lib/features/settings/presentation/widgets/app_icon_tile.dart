@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
 
 /// Model for an available app icon option.
 /// Extend this list in the future to add alternate icons.

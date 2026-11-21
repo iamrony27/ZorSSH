@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/services/host_key_service.dart';
-import 'package:aetherssh/core/services/secure_storage_service.dart';
-import 'package:aetherssh/core/services/sftp_service.dart';
-import 'package:aetherssh/features/files/data/remote_file.dart';
-import 'package:aetherssh/features/files/presentation/widgets/remote_file_item.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/services/host_key_service.dart';
+import 'package:zorssh/core/services/secure_storage_service.dart';
+import 'package:zorssh/core/services/sftp_service.dart';
+import 'package:zorssh/features/files/data/remote_file.dart';
+import 'package:zorssh/features/files/presentation/widgets/remote_file_item.dart';
 
 /// Provider for SFTP service instance
 final sftpServiceProvider = Provider<SftpService>((ref) {

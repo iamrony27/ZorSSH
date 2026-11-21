@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:uuid/uuid.dart';
-import 'package:aetherssh/core/services/sftp_service.dart';
-import 'package:aetherssh/core/utils/app_logger.dart';
-import 'package:aetherssh/core/utils/storage_helper.dart';
-import 'package:aetherssh/features/files/data/download_task.dart';
-import 'package:aetherssh/features/files/data/remote_file.dart';
+import 'package:zorssh/core/services/sftp_service.dart';
+import 'package:zorssh/core/utils/app_logger.dart';
+import 'package:zorssh/core/utils/storage_helper.dart';
+import 'package:zorssh/features/files/data/download_task.dart';
+import 'package:zorssh/features/files/data/remote_file.dart';
 
 class DownloadManagerState {
   final List<DownloadTask> tasks;

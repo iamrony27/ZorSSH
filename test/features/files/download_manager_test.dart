@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/core/utils/storage_helper.dart';
-import 'package:aetherssh/features/files/data/download_task.dart';
+import 'package:zorssh/core/utils/storage_helper.dart';
+import 'package:zorssh/features/files/data/download_task.dart';
 
 void main() {
   group('DownloadTask Tests', () {

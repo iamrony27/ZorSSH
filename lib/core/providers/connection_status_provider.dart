@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/services/hive_service.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/services/hive_service.dart';
 
 /// Connection status enum
 enum ConnectionStatus {

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aetherssh/features/terminal/services/ai_service.dart';
+import 'package:zorssh/features/terminal/services/ai_service.dart';
 
 void main() {
   group('AiService - Command Cleaning', () {

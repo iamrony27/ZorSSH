@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/core/localization/app_localization.dart';
-import 'package:aetherssh/features/home/widgets/server_summary_card.dart';
-import 'package:aetherssh/features/dashboard/providers/dashboard_providers.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/core/localization/app_localization.dart';
+import 'package:zorssh/features/home/widgets/server_summary_card.dart';
+import 'package:zorssh/features/dashboard/providers/dashboard_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

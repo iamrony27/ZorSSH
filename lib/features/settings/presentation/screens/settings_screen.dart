@@ -7,17 +7,17 @@ import 'package:http/http.dart' as http;
 import 'package:in_app_update/in_app_update.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:aetherssh/core/localization/app_localization.dart';
-import 'package:aetherssh/core/theme/app_theme.dart';
-import 'package:aetherssh/core/theme/app_sizes.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/language_tile.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/poll_interval_tile.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/biometrics_tile.dart';
-import 'package:aetherssh/features/settings/presentation/widgets/upi_donation_sheet.dart';
+import 'package:zorssh/core/localization/app_localization.dart';
+import 'package:zorssh/core/theme/app_theme.dart';
+import 'package:zorssh/core/theme/app_sizes.dart';
+import 'package:zorssh/features/settings/presentation/widgets/language_tile.dart';
+import 'package:zorssh/features/settings/presentation/widgets/poll_interval_tile.dart';
+import 'package:zorssh/features/settings/presentation/widgets/biometrics_tile.dart';
+import 'package:zorssh/features/settings/presentation/widgets/upi_donation_sheet.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:aetherssh/features/settings/providers/settings_provider.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/core/widgets/clipboard_sync_sheet.dart';
+import 'package:zorssh/features/settings/providers/settings_provider.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/core/widgets/clipboard_sync_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});

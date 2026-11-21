@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:aetherssh/core/services/os_detector.dart';
+import 'package:zorssh/core/services/os_detector.dart';
 
 class OsIconWidget extends StatelessWidget {
   final String osDistro;

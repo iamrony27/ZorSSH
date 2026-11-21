@@ -1,5 +1,5 @@
 import 'package:hive/hive.dart';
-import 'package:aetherssh/core/models/server.dart';
+import 'package:zorssh/core/models/server.dart';
 
 // Since we removed hive_generator due to dependency issues, we write the TypeAdapter manually.
 

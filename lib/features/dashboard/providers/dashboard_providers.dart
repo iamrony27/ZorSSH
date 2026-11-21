@@ -1,11 +1,11 @@
-// export 'package:aetherssh/features/dashboard/services/polling_service.dart'; // Removed deprecated service
+// export 'package:zorssh/features/dashboard/services/polling_service.dart'; // Removed deprecated service
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:aetherssh/core/models/server.dart';
-import 'package:aetherssh/core/providers.dart';
-import 'package:aetherssh/features/dashboard/models/server_stats.dart';
-import 'package:aetherssh/features/dashboard/models/ssh_connection_state.dart';
-import 'package:aetherssh/features/dashboard/viewmodels/server_monitor_viewmodel.dart';
+import 'package:zorssh/core/models/server.dart';
+import 'package:zorssh/core/providers.dart';
+import 'package:zorssh/features/dashboard/models/server_stats.dart';
+import 'package:zorssh/features/dashboard/models/ssh_connection_state.dart';
+import 'package:zorssh/features/dashboard/viewmodels/server_monitor_viewmodel.dart';
 
 /// ViewModel provider for background server monitoring
 /// Manages persistent SSH connections and background polling
